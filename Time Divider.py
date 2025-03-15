@@ -6,6 +6,16 @@ from tkinter import messagebox
 from tkinter import ttk
 from matplotlib.patches import Wedge
 
+def normalizar_hora(h_str: str) -> str:
+    """
+    Se o usuário digitou algo sem ':', adiciona ':00'.
+    Ex.: '16' => '16:00'; '07' => '07:00'; '07:30' permanece igual.
+    """
+    h_str = h_str.strip()
+    if h_str and ":" not in h_str:
+        h_str += ":00"
+    return h_str
+
 def gerar_grafico():
     try:
         # Obtém as entradas do usuário
@@ -19,13 +29,14 @@ def gerar_grafico():
             # Se o usuário não informou, pega o horário atual do sistema
             hora_atual = datetime.datetime.now().replace(second=0, microsecond=0)
         else:
-            # Tenta converter o texto informado em horário (HH:MM)
+            # Normaliza o texto caso seja só "16" => "16:00"
+            hora_atual_input = normalizar_hora(hora_atual_input)
             try:
                 hoje = datetime.datetime.now().date()
                 parsed_time = datetime.datetime.strptime(hora_atual_input, "%H:%M").time()
                 hora_atual = datetime.datetime.combine(hoje, parsed_time)
             except ValueError:
-                messagebox.showerror("Erro", "Horário inicial inválido! Por favor, insira no formato HH:MM.")
+                messagebox.showerror("Erro", "Horário inicial inválido! Use HH:MM (ex: 16 ou 16:00).")
                 return
 
         # 2) PROCESSA O TEMPO TOTAL OU O HORÁRIO FINAL
@@ -34,6 +45,8 @@ def gerar_grafico():
             return
 
         if end_time_input:
+            # Normaliza, caso seja só "18" => "18:00"
+            end_time_input = normalizar_hora(end_time_input)
             try:
                 hoje = datetime.datetime.now().date()
                 parsed_end_time = datetime.datetime.strptime(end_time_input, "%H:%M").time()
@@ -44,7 +57,7 @@ def gerar_grafico():
                     messagebox.showerror("Erro", "O horário final deve ser maior que o horário inicial.")
                     return
             except ValueError:
-                messagebox.showerror("Erro", "Horário final inválido! Por favor, insira no formato HH:MM.")
+                messagebox.showerror("Erro", "Horário final inválido! Use HH:MM (ex: 19 ou 19:00).")
                 return
         else:
             # Tempo total
@@ -177,7 +190,7 @@ def gerar_grafico():
 # Configura a janela Tkinter
 root = Tk()
 root.title("Gerador de Gráfico de Atividades")
-root.geometry("700x250")  # Largura maior para acomodar os campos lado a lado
+root.geometry("700x250")
 
 style = ttk.Style(root)
 style.theme_use('clam')
@@ -187,49 +200,37 @@ mainframe.grid(row=0, column=0, sticky=(N, W, E, S))
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
-#
-# 1) Linha: Horário de início
-#
+# Horário de início
 ttk.Label(mainframe, text="Horário de início (HH:MM):").grid(row=1, column=1, sticky=W)
 entrada_horario = ttk.Entry(mainframe, width=15)
 entrada_horario.grid(row=1, column=2, sticky=(W, E))
-ttk.Label(mainframe, text="(Deixe em branco para usar o horário atual)").grid(row=1, column=3, columnspan=3, sticky=W)
+ttk.Label(mainframe, text="(Deixe em branco p/ atual)").grid(row=1, column=3, columnspan=3, sticky=W)
 
-#
-# 2) Linha: "Tempo total" | "Ok, se preferir" | "Até qual horário"
-#
+# Frame para Tempo total e horário final
 frame_tempo = ttk.Frame(mainframe)
 frame_tempo.grid(row=2, column=1, columnspan=6, sticky=(W, E))
 
-# Esquerda: Tempo total
-ttk.Label(frame_tempo, text="Tempo total disponível (HH:MM ou horas):").grid(row=1, column=1, sticky=W)
+ttk.Label(frame_tempo, text="Tempo total (HH:MM ou horas):").grid(row=1, column=1, sticky=W)
 entrada_tempo = ttk.Entry(frame_tempo, width=10)
 entrada_tempo.grid(row=1, column=2, sticky=(W, E))
 ttk.Label(frame_tempo, text="Ex: 1:30 ou 1.5").grid(row=1, column=3, padx=(5, 25), sticky=W)
 
-# Texto "Ok, se preferir"
 ttk.Label(frame_tempo, text="Ok, se preferir:").grid(row=1, column=4, padx=10)
-
-# Direita: Até qual horário
-ttk.Label(frame_tempo, text="Até qual horário disponível (HH:MM):").grid(row=1, column=5, sticky=W)
+ttk.Label(frame_tempo, text="Até qual horário (HH:MM):").grid(row=1, column=5, sticky=W)
 entrada_end_time = ttk.Entry(frame_tempo, width=10)
 entrada_end_time.grid(row=1, column=6, sticky=(W, E))
-ttk.Label(frame_tempo, text="(Ignora o tempo total se preenchido)").grid(row=1, column=7, padx=(5, 0), sticky=W)
+ttk.Label(frame_tempo, text="(Ignora tempo total)").grid(row=1, column=7, padx=(5, 0), sticky=W)
 
-#
-# 3) Linha: Atividades
-#
+# Atividades
 ttk.Label(mainframe, text="Atividades (separadas por vírgula):").grid(row=3, column=1, sticky=W)
 entrada_atividades = ttk.Entry(mainframe, width=50)
 entrada_atividades.grid(row=3, column=2, columnspan=4, sticky=(W, E))
-ttk.Label(mainframe, text="Exemplo: Estudar, Exercício, Lazer").grid(row=4, column=2, columnspan=4, sticky=W)
+ttk.Label(mainframe, text="Ex: Estudar, Exercício, Lazer").grid(row=4, column=2, columnspan=4, sticky=W)
 
-#
-# 4) Botão Gerar Gráfico
-#
-ttk.Button(mainframe, text="Gerar Gráfico", command=gerar_grafico).grid(row=5, column=1, columnspan=6, pady=10)
+# Botão
+ttk.Button(mainframe, text="Gerar Gráfico", command=gerar_grafico).grid(row=5, column=2, pady=10)
 
-# Ajusta espaçamento de todos os filhos
+# Espaçamento
 for child in mainframe.winfo_children():
     child.grid_configure(padx=5, pady=5)
 
