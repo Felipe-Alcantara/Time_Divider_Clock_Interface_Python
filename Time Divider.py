@@ -21,8 +21,6 @@ def gerar_grafico():
         else:
             # Tenta converter o texto informado em horário (HH:MM)
             try:
-                # Aqui pegamos só a hora e minuto, mas ainda é preciso ter uma data.
-                # Podemos usar hoje como data padrão.
                 hoje = datetime.datetime.now().date()
                 parsed_time = datetime.datetime.strptime(hora_atual_input, "%H:%M").time()
                 hora_atual = datetime.datetime.combine(hoje, parsed_time)
@@ -31,20 +29,16 @@ def gerar_grafico():
                 return
 
         # 2) PROCESSA O TEMPO TOTAL OU O HORÁRIO FINAL
-        #    A pessoa pode optar por inserir "tempo total" ou "horário final".
-        #    Se ambos estiverem vazios, é erro.
         if end_time_input == "" and tempo_total_input == "":
             messagebox.showerror("Erro", "Por favor, insira o tempo total OU o horário final disponível.")
             return
 
         if end_time_input:
-            # Se o usuário forneceu um horário final
             try:
                 hoje = datetime.datetime.now().date()
                 parsed_end_time = datetime.datetime.strptime(end_time_input, "%H:%M").time()
                 end_time = datetime.datetime.combine(hoje, parsed_end_time)
 
-                # Calcula a diferença em horas entre hora_atual e end_time
                 tempo_total = (end_time - hora_atual).total_seconds() / 3600.0
                 if tempo_total <= 0:
                     messagebox.showerror("Erro", "O horário final deve ser maior que o horário inicial.")
@@ -53,21 +47,19 @@ def gerar_grafico():
                 messagebox.showerror("Erro", "Horário final inválido! Por favor, insira no formato HH:MM.")
                 return
         else:
-            # Caso contrário, se o usuário não forneceu end_time, mas forneceu tempo_total
+            # Tempo total
             try:
-                # Pode ser "HH:MM" ou apenas horas (ex: "3")
                 if ":" in tempo_total_input:
                     horas, minutos = map(int, tempo_total_input.split(":"))
                     tempo_total = horas + minutos / 60.0
                 else:
-                    # Se o usuário digitou só um número (ex: 3)
                     tempo_total = float(tempo_total_input)
 
                 if tempo_total <= 0:
                     messagebox.showerror("Erro", "O tempo total deve ser um número positivo.")
                     return
             except ValueError:
-                messagebox.showerror("Erro", "Tempo total inválido! Por favor, insira no formato HH:MM ou somente as horas (ex: 1.5).")
+                messagebox.showerror("Erro", "Tempo total inválido! Use HH:MM ou somente horas (ex: 1.5).")
                 return
 
         # 3) PROCESSA AS ATIVIDADES
@@ -76,9 +68,8 @@ def gerar_grafico():
             messagebox.showerror("Erro", "Por favor, insira pelo menos uma atividade.")
             return
 
-        # Verifica se há duplicadas
         if len(set(atividades)) != len(atividades):
-            messagebox.showerror("Erro", "Existem atividades duplicadas! Por favor, insira nomes únicos.")
+            messagebox.showerror("Erro", "Existem atividades duplicadas! Use nomes únicos.")
             return
 
         quantidade_atividades = len(atividades)
@@ -94,12 +85,10 @@ def gerar_grafico():
             if len(horarios_inicio) < quantidade_atividades:
                 horarios_inicio.append(horario_fim)
 
-        # Função auxiliar para converter hora em ângulo no relógio
         def hora_para_angulo_graus(horario):
-            # Ajuste para formato 12h (hora % 12)
+            # Converte o horário para ângulo no formato de 12h
             hora_decimal = (horario.hour % 12) + horario.minute / 60.0
-            # Cada hora no relógio equivale a 30 graus (360/12), e o 0° está em 3h,
-            # então usamos 90° como referência e invertemos o sinal para girar corretamente.
+            # Cada hora = 30 graus. 0h = 90 graus. Negativo para girar no sentido correto.
             angulo = (-hora_decimal * 30 + 90) % 360
             return angulo
 
@@ -112,7 +101,7 @@ def gerar_grafico():
         circle = plt.Circle((0, 0), 1, color='white', ec='black', lw=2)
         ax.add_artist(circle)
 
-        # Desenha as marcações das horas (traços)
+        # Desenha as marcações das horas
         for i in range(12):
             angulo = np.deg2rad(90 - i * 30)
             x_interior = 0.9 * np.cos(angulo)
@@ -121,7 +110,7 @@ def gerar_grafico():
             y_exterior = np.sin(angulo)
             ax.plot([x_interior, x_exterior], [y_interior, y_exterior], color='black', lw=2)
 
-        # Desenha os números das horas (1..12)
+        # Desenha os números das horas
         for i in range(12):
             angulo = np.deg2rad(90 - i * 30)
             x_num = 0.75 * np.cos(angulo)
@@ -137,7 +126,6 @@ def gerar_grafico():
         for i in range(quantidade_atividades):
             angulo_inicio = hora_para_angulo_graus(horarios_inicio[i])
             angulo_fim = hora_para_angulo_graus(horarios_fim[i])
-            # Ajuste para que o ângulo percorra no sentido correto
             if angulo_inicio <= angulo_fim:
                 angulo_inicio += 360
 
@@ -153,7 +141,7 @@ def gerar_grafico():
             )
             ax.add_patch(wedge)
 
-            # Define a posição do texto no "meio" do setor
+            # Texto no centro do setor
             angulo_texto = (angulo_fim + angulo_inicio) / 2 % 360
             angulo_texto_rad = np.deg2rad(angulo_texto)
             x_text = 1.2 * np.cos(angulo_texto_rad)
@@ -173,7 +161,6 @@ def gerar_grafico():
         ]
         ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.2, 1.1))
 
-        # Título do gráfico
         plt.title('Divisão do Tempo no Relógio', y=1.08)
 
         # Salva e exibe o gráfico
@@ -190,48 +177,60 @@ def gerar_grafico():
 # Configura a janela Tkinter
 root = Tk()
 root.title("Gerador de Gráfico de Atividades")
-root.geometry("550x300")
+root.geometry("700x250")  # Largura maior para acomodar os campos lado a lado
 
-# Estilo do Tkinter
 style = ttk.Style(root)
 style.theme_use('clam')
 
-# Frame principal
 mainframe = ttk.Frame(root, padding="10 10 10 10")
 mainframe.grid(row=0, column=0, sticky=(N, W, E, S))
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
-# 1) Horário de início
+#
+# 1) Linha: Horário de início
+#
 ttk.Label(mainframe, text="Horário de início (HH:MM):").grid(row=1, column=1, sticky=W)
-entrada_horario = ttk.Entry(mainframe, width=20)
+entrada_horario = ttk.Entry(mainframe, width=15)
 entrada_horario.grid(row=1, column=2, sticky=(W, E))
-ttk.Label(mainframe, text="(Deixe em branco para usar o horário atual)").grid(row=1, column=3, sticky=W)
+ttk.Label(mainframe, text="(Deixe em branco para usar o horário atual)").grid(row=1, column=3, columnspan=3, sticky=W)
 
-# 2) Até qual horário disponível (novo campo)
-ttk.Label(mainframe, text="Até qual horário disponível (HH:MM):").grid(row=2, column=1, sticky=W)
-entrada_end_time = ttk.Entry(mainframe, width=20)
-entrada_end_time.grid(row=2, column=2, sticky=(W, E))
-ttk.Label(mainframe, text="(Opcional: se preenchido, ignora o tempo total)").grid(row=2, column=3, sticky=W)
+#
+# 2) Linha: "Tempo total" | "Ok, se preferir" | "Até qual horário"
+#
+frame_tempo = ttk.Frame(mainframe)
+frame_tempo.grid(row=2, column=1, columnspan=6, sticky=(W, E))
 
-# 3) Tempo total disponível
-ttk.Label(mainframe, text="Tempo total disponível (HH:MM ou horas):").grid(row=3, column=1, sticky=W)
-entrada_tempo = ttk.Entry(mainframe, width=20)
-entrada_tempo.grid(row=3, column=2, sticky=(W, E))
-ttk.Label(mainframe, text="(Ex: 1:30 ou apenas 1.5)").grid(row=3, column=3, sticky=W)
+# Esquerda: Tempo total
+ttk.Label(frame_tempo, text="Tempo total disponível (HH:MM ou horas):").grid(row=1, column=1, sticky=W)
+entrada_tempo = ttk.Entry(frame_tempo, width=10)
+entrada_tempo.grid(row=1, column=2, sticky=(W, E))
+ttk.Label(frame_tempo, text="Ex: 1:30 ou 1.5").grid(row=1, column=3, padx=(5, 25), sticky=W)
 
-# 4) Atividades
-ttk.Label(mainframe, text="Atividades (separadas por vírgula):").grid(row=4, column=1, sticky=W)
-entrada_atividades = ttk.Entry(mainframe, width=40)
-entrada_atividades.grid(row=4, column=2, columnspan=2, sticky=(W, E))
-ttk.Label(mainframe, text="Exemplo: Estudar, Exercício, Lazer").grid(row=5, column=2, sticky=W)
+# Texto "Ok, se preferir"
+ttk.Label(frame_tempo, text="Ok, se preferir:").grid(row=1, column=4, padx=10)
 
-# Botão para gerar gráfico
-ttk.Button(mainframe, text="Gerar Gráfico", command=gerar_grafico).grid(row=6, column=2, pady=10)
+# Direita: Até qual horário
+ttk.Label(frame_tempo, text="Até qual horário disponível (HH:MM):").grid(row=1, column=5, sticky=W)
+entrada_end_time = ttk.Entry(frame_tempo, width=10)
+entrada_end_time.grid(row=1, column=6, sticky=(W, E))
+ttk.Label(frame_tempo, text="(Ignora o tempo total se preenchido)").grid(row=1, column=7, padx=(5, 0), sticky=W)
 
-# Espaçamento
+#
+# 3) Linha: Atividades
+#
+ttk.Label(mainframe, text="Atividades (separadas por vírgula):").grid(row=3, column=1, sticky=W)
+entrada_atividades = ttk.Entry(mainframe, width=50)
+entrada_atividades.grid(row=3, column=2, columnspan=4, sticky=(W, E))
+ttk.Label(mainframe, text="Exemplo: Estudar, Exercício, Lazer").grid(row=4, column=2, columnspan=4, sticky=W)
+
+#
+# 4) Botão Gerar Gráfico
+#
+ttk.Button(mainframe, text="Gerar Gráfico", command=gerar_grafico).grid(row=5, column=1, columnspan=6, pady=10)
+
+# Ajusta espaçamento de todos os filhos
 for child in mainframe.winfo_children():
     child.grid_configure(padx=5, pady=5)
 
-# Inicia a interface
 root.mainloop()
