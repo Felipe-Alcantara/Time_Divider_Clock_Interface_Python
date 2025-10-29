@@ -1,4 +1,8 @@
-# Divisão de Atividades em um Relógio com Interface Gráfica
+# ⏱️ Time Divider — Divisão de Atividades em um Relógio
+
+<p align="center">
+  <strong>Python</strong> 3.13 &nbsp; • &nbsp; <strong>matplotlib</strong> &nbsp; • &nbsp; <strong>tkinter</strong> &nbsp; • &nbsp; <strong>License</strong> MIT
+</p>
 
 Este projeto em Python permite visualizar a distribuição de atividades em um relógio analógico, utilizando uma interface gráfica amigável desenvolvida com Tkinter. O programa ajuda a planejar e gerenciar o tempo de forma eficiente, representando graficamente o tempo alocado para cada atividade dentro de um período especificado.
 
