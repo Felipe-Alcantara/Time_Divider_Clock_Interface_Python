@@ -4,6 +4,14 @@
   <strong>Python</strong> 3.13 &nbsp; • &nbsp; <strong>matplotlib</strong> &nbsp; • &nbsp; <strong>tkinter</strong> &nbsp; • &nbsp; <strong>License</strong> MIT
 </p>
 
+> **Release v1.2 — Windows (.exe) disponível**
+>
+> ⚡ A versão 1.2 do Time Divider está disponível como executável para Windows (.exe). Você pode baixar o instalador/arquivo pronto na página de Releases do repositório GitHub:
+>
+> https://github.com/Felipe-Alcantara/Time_Divider_Clock_Interface_Python/releases
+>
+> Verifique a seção "Assets" da Release 1.2 para encontrar o arquivo `.exe`. Se tiver dúvidas ou encontrar problemas, abra uma issue no repositório para que possamos ajudar.
+
 Este projeto em Python permite visualizar a distribuição de atividades em um relógio analógico, utilizando uma interface gráfica amigável desenvolvida com Tkinter. O programa ajuda a planejar e gerenciar o tempo de forma eficiente, representando graficamente o tempo alocado para cada atividade dentro de um período especificado.
 
 ## Índice
