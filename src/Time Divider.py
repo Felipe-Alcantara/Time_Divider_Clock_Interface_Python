@@ -189,49 +189,132 @@ def gerar_grafico():
 # --------------------------------------------------------------------
 # Configura a janela Tkinter
 root = Tk()
-root.title("Gerador de Gráfico de Atividades")
-root.geometry("700x250")
+root.title("⏱️ Time Divider - Gerador de Gráfico de Atividades")
+root.geometry("850x450")
+root.configure(bg='#f0f4f8')
+root.resizable(False, False)
 
+# Configuração de estilos modernos
 style = ttk.Style(root)
 style.theme_use('clam')
 
-mainframe = ttk.Frame(root, padding="10 10 10 10")
-mainframe.grid(row=0, column=0, sticky=(N, W, E, S))
-root.columnconfigure(0, weight=1)
-root.rowconfigure(0, weight=1)
+# Cores modernas
+COR_BG = '#f0f4f8'
+COR_FRAME = '#ffffff'
+COR_PRIMARIA = '#3b82f6'
+COR_SECUNDARIA = '#8b5cf6'
+COR_TEXTO = '#1e293b'
+COR_TEXTO_CLARO = '#64748b'
+COR_BOTAO = '#3b82f6'
+COR_BOTAO_HOVER = '#2563eb'
 
-# Horário de início
-ttk.Label(mainframe, text="Horário de início (HH:MM):").grid(row=1, column=1, sticky=W)
-entrada_horario = ttk.Entry(mainframe, width=15)
-entrada_horario.grid(row=1, column=2, sticky=(W, E))
-ttk.Label(mainframe, text="(Deixe em branco p/ atual)").grid(row=1, column=3, columnspan=3, sticky=W)
+# Estilos personalizados
+style.configure('Title.TLabel', 
+                background=COR_FRAME, 
+                foreground=COR_TEXTO,
+                font=('Segoe UI', 18, 'bold'))
 
-# Frame para Tempo total e horário final
-frame_tempo = ttk.Frame(mainframe)
-frame_tempo.grid(row=2, column=1, columnspan=6, sticky=(W, E))
+style.configure('Subtitle.TLabel', 
+                background=COR_FRAME, 
+                foreground=COR_TEXTO_CLARO,
+                font=('Segoe UI', 9))
 
-ttk.Label(frame_tempo, text="Tempo total (HH:MM ou horas):").grid(row=1, column=1, sticky=W)
-entrada_tempo = ttk.Entry(frame_tempo, width=10)
-entrada_tempo.grid(row=1, column=2, sticky=(W, E))
-ttk.Label(frame_tempo, text="Ex: 1:30 ou 1.5").grid(row=1, column=3, padx=(5, 25), sticky=W)
+style.configure('Label.TLabel', 
+                background=COR_FRAME, 
+                foreground=COR_TEXTO,
+                font=('Segoe UI', 10))
 
-ttk.Label(frame_tempo, text="Ok, se preferir:").grid(row=1, column=4, padx=10)
-ttk.Label(frame_tempo, text="Até qual horário (HH:MM):").grid(row=1, column=5, sticky=W)
-entrada_end_time = ttk.Entry(frame_tempo, width=10)
-entrada_end_time.grid(row=1, column=6, sticky=(W, E))
-ttk.Label(frame_tempo, text="(Ignora tempo total)").grid(row=1, column=7, padx=(5, 0), sticky=W)
+style.configure('Hint.TLabel', 
+                background=COR_FRAME, 
+                foreground=COR_TEXTO_CLARO,
+                font=('Segoe UI', 9, 'italic'))
 
-# Atividades
-ttk.Label(mainframe, text="Atividades (separadas por vírgula):").grid(row=3, column=1, sticky=W)
-entrada_atividades = ttk.Entry(mainframe, width=50)
-entrada_atividades.grid(row=3, column=2, columnspan=4, sticky=(W, E))
-ttk.Label(mainframe, text="Ex: Estudar, Exercício, Lazer").grid(row=4, column=2, columnspan=4, sticky=W)
+style.configure('Custom.TEntry',
+                fieldbackground='white',
+                borderwidth=2,
+                relief='solid')
 
-# Botão
-ttk.Button(mainframe, text="Gerar Gráfico", command=gerar_grafico).grid(row=5, column=2, pady=10)
+style.configure('Generate.TButton',
+                font=('Segoe UI', 11, 'bold'),
+                background=COR_BOTAO,
+                foreground='white',
+                borderwidth=0,
+                focuscolor='none',
+                padding=12)
 
-# Espaçamento
-for child in mainframe.winfo_children():
-    child.grid_configure(padx=5, pady=5)
+style.map('Generate.TButton',
+          background=[('active', COR_BOTAO_HOVER)])
+
+# Frame principal com sombra simulada
+shadow_frame = ttk.Frame(root, style='Card.TFrame')
+shadow_frame.place(relx=0.5, rely=0.5, anchor='center', width=800, height=400)
+
+style.configure('Card.TFrame', background=COR_FRAME, relief='flat')
+
+mainframe = ttk.Frame(shadow_frame, padding="30 30 30 30", style='Card.TFrame')
+mainframe.pack(fill='both', expand=True)
+
+# Cabeçalho
+header_frame = ttk.Frame(mainframe, style='Card.TFrame')
+header_frame.grid(row=0, column=0, columnspan=8, pady=(0, 20), sticky=(W, E))
+
+ttk.Label(header_frame, text="⏱️ Time Divider", style='Title.TLabel').pack(anchor='center')
+ttk.Label(header_frame, text="Organize seu tempo visualmente em um relógio analógico", 
+          style='Subtitle.TLabel').pack(anchor='center', pady=(5, 0))
+
+# Separador
+separator1 = ttk.Separator(mainframe, orient='horizontal')
+separator1.grid(row=1, column=0, columnspan=8, sticky=(W, E), pady=(0, 20))
+
+# Seção 1: Horário de início
+section1_frame = ttk.Frame(mainframe, style='Card.TFrame')
+section1_frame.grid(row=2, column=0, columnspan=8, sticky=(W, E), pady=(0, 15))
+
+ttk.Label(section1_frame, text="🕐 Horário de Início", style='Label.TLabel').grid(row=0, column=0, sticky=W, padx=(0, 15))
+entrada_horario = ttk.Entry(section1_frame, width=15, style='Custom.TEntry', font=('Segoe UI', 10))
+entrada_horario.grid(row=0, column=1, sticky=W, padx=(0, 10))
+ttk.Label(section1_frame, text="(Deixe em branco para usar o horário atual)", style='Hint.TLabel').grid(row=0, column=2, sticky=W)
+
+# Seção 2: Tempo total ou horário final
+section2_frame = ttk.Frame(mainframe, style='Card.TFrame')
+section2_frame.grid(row=3, column=0, columnspan=8, sticky=(W, E), pady=(0, 15))
+
+ttk.Label(section2_frame, text="⏳ Duração Total", style='Label.TLabel').grid(row=0, column=0, sticky=W, padx=(0, 15))
+entrada_tempo = ttk.Entry(section2_frame, width=12, style='Custom.TEntry', font=('Segoe UI', 10))
+entrada_tempo.grid(row=0, column=1, sticky=W, padx=(0, 10))
+ttk.Label(section2_frame, text="Ex: 1:30 ou 1.5", style='Hint.TLabel').grid(row=0, column=2, sticky=W, padx=(0, 30))
+
+ttk.Label(section2_frame, text="ou", style='Hint.TLabel').grid(row=0, column=3, padx=15)
+
+ttk.Label(section2_frame, text="🎯 Horário Final", style='Label.TLabel').grid(row=0, column=4, sticky=W, padx=(0, 15))
+entrada_end_time = ttk.Entry(section2_frame, width=12, style='Custom.TEntry', font=('Segoe UI', 10))
+entrada_end_time.grid(row=0, column=5, sticky=W, padx=(0, 10))
+ttk.Label(section2_frame, text="Ex: 18:00", style='Hint.TLabel').grid(row=0, column=6, sticky=W)
+
+# Seção 3: Atividades
+section3_frame = ttk.Frame(mainframe, style='Card.TFrame')
+section3_frame.grid(row=4, column=0, columnspan=8, sticky=(W, E), pady=(0, 15))
+
+ttk.Label(section3_frame, text="📋 Atividades", style='Label.TLabel').grid(row=0, column=0, sticky=W, padx=(0, 15))
+entrada_atividades = ttk.Entry(section3_frame, width=60, style='Custom.TEntry', font=('Segoe UI', 10))
+entrada_atividades.grid(row=0, column=1, sticky=(W, E), padx=(0, 10))
+ttk.Label(section3_frame, text="Separe com vírgula - Ex: Estudar, Exercício, Lazer", 
+          style='Hint.TLabel').grid(row=1, column=1, sticky=W, pady=(5, 0))
+
+section3_frame.columnconfigure(1, weight=1)
+
+# Separador
+separator2 = ttk.Separator(mainframe, orient='horizontal')
+separator2.grid(row=5, column=0, columnspan=8, sticky=(W, E), pady=(15, 20))
+
+# Botão de gerar - centralizado
+button_frame = ttk.Frame(mainframe, style='Card.TFrame')
+button_frame.grid(row=6, column=0, columnspan=8)
+
+gerar_btn = ttk.Button(button_frame, text="✨ Gerar Gráfico", command=gerar_grafico, style='Generate.TButton')
+gerar_btn.pack()
+
+# Configurações de grid weight
+mainframe.columnconfigure(0, weight=1)
 
 root.mainloop()
