@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⏱️ Time Divider - Versão Web</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.12.3/brython.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.12.3/brython_stdlib.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body onload="brython()">
+    <div class="container">
+        <!-- Cabeçalho -->
+        <header class="header">
+            <h1>⏱️ Time Divider</h1>
+            <p class="subtitle">Organize seu tempo visualmente em um relógio analógico</p>
+            <div class="badges">
+                <span class="badge badge-python">Python (Brython)</span>
+                <span class="badge badge-web">Web</span>
+                <span class="badge badge-chart">Chart.js</span>
+            </div>
+        </header>
+
+        <!-- Formulário -->
+        <div class="card">
+            <h2>📝 Configuração</h2>
+            
+            <div class="form-group">
+                <label for="horario-inicio">
+                    <span class="icon">🕐</span>
+                    Horário de Início
+                </label>
+                <input type="text" id="horario-inicio" placeholder="HH:MM" class="input">
+                <small class="hint">Deixe em branco para usar o horário atual</small>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tempo-total">
+                        <span class="icon">⏳</span>
+                        Duração Total
+                    </label>
+                    <input type="text" id="tempo-total" placeholder="1:30 ou 1.5" class="input">
+                    <small class="hint">Formato: HH:MM ou horas decimais</small>
+                </div>
+
+                <div class="form-divider">
+                    <span>ou</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="horario-final">
+                        <span class="icon">🎯</span>
+                        Horário Final
+                    </label>
+                    <input type="text" id="horario-final" placeholder="18:00" class="input">
+                    <small class="hint">Ignora duração total se preenchido</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="atividades">
+                    <span class="icon">📋</span>
+                    Atividades
+                </label>
+                <input type="text" id="atividades" placeholder="Estudar, Exercício, Lazer" class="input input-large">
+                <small class="hint">Separe as atividades por vírgula</small>
+            </div>
+
+            <button id="btn-gerar" class="btn-primary">✨ Gerar Gráfico</button>
+            
+            <div id="mensagem-erro" class="alert alert-error" style="display: none;"></div>
+        </div>
+
+        <!-- Área do Gráfico -->
+        <div class="card" id="grafico-container" style="display: none;">
+            <h2>📊 Visualização</h2>
+            <div class="chart-wrapper">
+                <canvas id="grafico-relogio"></canvas>
+            </div>
+            <div id="legenda-atividades" class="legenda"></div>
+            <button id="btn-baixar" class="btn-secondary">💾 Baixar Imagem</button>
+        </div>
+
+        <!-- Rodapé -->
+        <footer class="footer">
+            <p>Desenvolvido com 💙 usando Brython • <a href="https://github.com/Felipe-Alcantara/Time_Divider_Clock_Interface_Python" target="_blank">Ver no GitHub</a></p>
+        </footer>
+    </div>
+
+    <script type="text/python" src="app.py"></script>
+</body>
+</html>
