@@ -1,8 +1,15 @@
-# ⏱️ Time Divider — Divisão de Atividades em um Relógio
+<div align="center">
 
-<p align="center">
-  <strong>Python</strong> 3.13 &nbsp; • &nbsp; <strong>matplotlib</strong> &nbsp; • &nbsp; <strong>tkinter</strong> &nbsp; • &nbsp; <strong>License</strong> MIT
-</p>
+# ⏱️ Time Divider
+
+### Divisão de Atividades em um Relógio com Interface Gráfica
+
+![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat&logo=python&logoColor=white)
+![matplotlib](https://img.shields.io/badge/matplotlib-11557c?style=flat&logo=matplotlib&logoColor=white)
+![tkinter](https://img.shields.io/badge/GUI-Tkinter-yellow?style=flat)
+![License](https://img.shields.io/badge/License-MIT-orange?style=flat)
+
+</div>
 
 > **Release v1.2 — Windows (.exe) disponível**
 >
