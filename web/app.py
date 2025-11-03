@@ -139,32 +139,61 @@ def gerar_grafico(event):
             horarios_fim.append(hora_atual)
         
         # 5. PREPARAR DADOS PARA O GRÁFICO
-        dados_grafico = []
-        cores_grafico = []
-        labels_grafico = []
+        # Precisamos preencher 12 horas completas (360°) no relógio
+        # Criar array de 12 horas, cada uma com 30°
+        dados_por_hora = [0] * 12  # 12 posições, uma para cada hora
+        cores_por_hora = ['rgba(200, 200, 200, 0.1)'] * 12  # Cor cinza transparente padrão
+        labels_por_hora = [''] * 12  # Sem label por padrão
         
+        # Preencher as horas com as atividades
         for i in range(num_atividades):
-            angulo_inicio = hora_para_angulo(horarios_inicio[i])
-            angulo_fim = hora_para_angulo(horarios_fim[i])
+            hora_ini = horarios_inicio[i].hour % 12
+            hora_fim = horarios_fim[i].hour % 12
+            minutos_ini = horarios_inicio[i].minute
+            minutos_fim = horarios_fim[i].minute
             
-            # Calcular a duração em graus
-            duracao_graus = (angulo_fim - angulo_inicio) % 360
-            if duracao_graus == 0:
-                duracao_graus = 360
+            # Calcular quantos "slots" de hora essa atividade ocupa
+            tempo_horas = tempo_por_atividade
             
-            dados_grafico.append({
-                'angulo_inicio': angulo_inicio,
-                'duracao': duracao_graus
-            })
-            cores_grafico.append(CORES[i % len(CORES)])
-            labels_grafico.append(atividades[i])
+            # Posição inicial no relógio (0-11)
+            pos_inicial = hora_ini
+            
+            # Distribuir a atividade pelas horas que ela ocupa
+            horas_restantes = tempo_horas
+            pos_atual = pos_inicial
+            
+            while horas_restantes > 0:
+                # Quanto dessa hora pertence a essa atividade
+                if pos_atual == pos_inicial and minutos_ini > 0:
+                    # Primeira hora pode começar no meio
+                    fracao_hora = min(1 - (minutos_ini / 60), horas_restantes)
+                else:
+                    fracao_hora = min(1, horas_restantes)
+                
+                # Se essa posição ainda não foi preenchida, preencher
+                if dados_por_hora[pos_atual] == 0:
+                    dados_por_hora[pos_atual] = fracao_hora * 30  # Converter para graus
+                    cores_por_hora[pos_atual] = CORES[i % len(CORES)]
+                    labels_por_hora[pos_atual] = atividades[i]
+                else:
+                    # Acumular na mesma hora (se houver sobreposição)
+                    dados_por_hora[pos_atual] += fracao_hora * 30
+                
+                horas_restantes -= fracao_hora
+                pos_atual = (pos_atual + 1) % 12
+        
+        # Garantir que todas as posições tenham pelo menos um valor mínimo para aparecer
+        for i in range(12):
+            if dados_por_hora[i] == 0:
+                dados_por_hora[i] = 30  # 30° = 1 hora completa vazia
         
         # 6. CRIAR/ATUALIZAR GRÁFICO COM CHART.JS
-        criar_grafico_chartjs(dados_grafico, cores_grafico, labels_grafico, 
+        criar_grafico_chartjs(dados_por_hora, cores_por_hora, labels_por_hora, 
                               horarios_inicio, horarios_fim, atividades)
         
-        # 7. CRIAR LEGENDA
-        criar_legenda(atividades, horarios_inicio, horarios_fim, cores_grafico)
+        # 7. CRIAR LEGENDA (usar cores originais das atividades)
+        cores_atividades = [CORES[i % len(CORES)] for i in range(num_atividades)]
+        criar_legenda(atividades, horarios_inicio, horarios_fim, cores_atividades)
         
         # Mostrar container do gráfico
         grafico_container.style.display = "block"
@@ -177,7 +206,7 @@ def gerar_grafico(event):
         window.console.log(f"Erro detalhado: {e}")
 
 def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, atividades):
-    """Cria o gráfico de relógio usando Chart.js (tipo PolarArea customizado)"""
+    """Cria o gráfico de relógio usando Chart.js (tipo Doughnut)"""
     global grafico_atual
     
     # Destruir gráfico anterior se existir
@@ -187,19 +216,18 @@ def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, a
     # Preparar dados no formato Chart.js
     Chart = window.Chart
     
-    # Dados para o gráfico polar (simula relógio)
-    # Cada atividade é um "slice" do relógio
-    datasets_data = []
-    for i, dado in enumerate(dados):
-        # Cada atividade tem um valor proporcional à sua duração
-        datasets_data.append(dado['duracao'])
+    # Plugin para desenhar números do relógio
+    plugin_numeros = {
+        'id': 'numerosRelogio',
+        'afterDatasetsDraw': lambda chart, args, options: desenhar_numeros_relogio(chart)
+    }
     
     config = {
-        'type': 'polarArea',
+        'type': 'doughnut',
         'data': {
-            'labels': labels,
+            'labels': ['12h', '1h', '2h', '3h', '4h', '5h', '6h', '7h', '8h', '9h', '10h', '11h'],
             'datasets': [{
-                'data': datasets_data,
+                'data': dados,  # Array de 12 valores (30° cada)
                 'backgroundColor': cores,
                 'borderWidth': 2,
                 'borderColor': '#ffffff'
@@ -208,6 +236,17 @@ def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, a
         'options': {
             'responsive': True,
             'maintainAspectRatio': True,
+            'rotation': -90,  # Começa no topo (12h)
+            'circumference': 360,
+            'cutout': '35%',
+            'layout': {
+                'padding': {
+                    'top': 60,
+                    'bottom': 60,
+                    'left': 60,
+                    'right': 60
+                }
+            },
             'plugins': {
                 'legend': {
                     'display': False
@@ -216,35 +255,60 @@ def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, a
                     'display': True,
                     'text': '⏱️ Divisão do Tempo no Relógio',
                     'font': {
-                        'size': 20,
+                        'size': 18,
                         'weight': 'bold',
                         'family': "'Segoe UI', sans-serif"
                     },
                     'color': '#1e293b',
-                    'padding': 20
+                    'padding': {
+                        'top': 10,
+                        'bottom': 30
+                    }
                 },
                 'tooltip': {
+                    'enabled': True,
                     'callbacks': {
-                        'label': lambda context: f"{labels[context.dataIndex]}: {horarios_inicio[context.dataIndex].strftime('%H:%M')} - {horarios_fim[context.dataIndex].strftime('%H:%M')}"
+                        'label': lambda context: labels[context.dataIndex] if labels[context.dataIndex] else 'Livre'
                     }
                 }
-            },
-            'scales': {
-                'r': {
-                    'ticks': {
-                        'display': False
-                    },
-                    'grid': {
-                        'color': 'rgba(0, 0, 0, 0.1)'
-                    }
-                }
-            },
-            'startAngle': -90  # Começa no topo (12h)
-        }
+            }
+        },
+        'plugins': [plugin_numeros]
     }
     
     ctx = canvas.getContext('2d')
     grafico_atual = Chart.new(ctx, config)
+
+def desenhar_numeros_relogio(chart):
+    """Desenha os números de 1-12 ao redor do relógio"""
+    ctx = chart.ctx
+    
+    # Pegar dimensões do canvas
+    width = chart.canvas.width
+    height = chart.canvas.height
+    center_x = width / 2
+    center_y = height / 2
+    
+    # Raio para os números (fora do gráfico)
+    radius = min(width, height) / 2.3
+    
+    ctx.save()
+    ctx.font = 'bold 22px Segoe UI'
+    ctx.fillStyle = '#1e293b'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    
+    # Números do relógio
+    numeros = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    
+    for i, num in enumerate(numeros):
+        # Ângulo para cada número (12 no topo = -90°)
+        angulo = (i * 30 - 90) * window.Math.PI / 180
+        x = center_x + radius * window.Math.cos(angulo)
+        y = center_y + radius * window.Math.sin(angulo)
+        ctx.fillText(str(num), x, y)
+    
+    ctx.restore()
 
 def criar_legenda(atividades, horarios_inicio, horarios_fim, cores):
     """Cria a legenda personalizada das atividades"""

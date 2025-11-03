@@ -219,12 +219,13 @@ label {
 /* Gráfico */
 .chart-wrapper {
     position: relative;
-    height: 500px;
-    margin: 2rem 0;
+    height: 600px;
+    margin: 3rem 0;
+    padding: 30px;
 }
 
 #grafico-relogio {
-    max-height: 500px;
+    max-height: 600px;
 }
 
 /* Legenda */
