@@ -217,15 +217,29 @@ label {
 }
 
 /* Gráfico */
+.chart-title {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 10px;
+    margin-top: 5px;
+}
+
 .chart-wrapper {
     position: relative;
-    height: 600px;
-    margin: 3rem 0;
-    padding: 30px;
+    height: 700px;
+    width: 100%;
+    margin: 1rem 0;
+    padding: 10px 10px 30px 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #grafico-relogio {
-    max-height: 600px;
+    max-height: 100%;
+    max-width: 100%;
 }
 
 /* Legenda */
@@ -308,7 +322,12 @@ label {
     }
 
     .chart-wrapper {
-        height: 400px;
+        height: 450px;
+        padding: 10px;
+    }
+    
+    #grafico-relogio {
+        max-height: 100%;
     }
 }
 

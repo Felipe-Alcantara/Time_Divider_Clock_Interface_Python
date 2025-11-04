@@ -230,7 +230,9 @@ def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, a
                 'data': dados,  # Array de 12 valores (30° cada)
                 'backgroundColor': cores,
                 'borderWidth': 2,
-                'borderColor': '#ffffff'
+                'borderColor': '#ffffff',
+                'circumference': 360,
+                'rotation': 0
             }]
         },
         'options': {
@@ -241,10 +243,10 @@ def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, a
             'cutout': '35%',
             'layout': {
                 'padding': {
-                    'top': 60,
-                    'bottom': 60,
-                    'left': 60,
-                    'right': 60
+                    'top': 50,
+                    'bottom': 50,
+                    'left': 40,
+                    'right': 40
                 }
             },
             'plugins': {
@@ -252,18 +254,7 @@ def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, a
                     'display': False
                 },
                 'title': {
-                    'display': True,
-                    'text': '⏱️ Divisão do Tempo no Relógio',
-                    'font': {
-                        'size': 18,
-                        'weight': 'bold',
-                        'family': "'Segoe UI', sans-serif"
-                    },
-                    'color': '#1e293b',
-                    'padding': {
-                        'top': 10,
-                        'bottom': 30
-                    }
+                    'display': False
                 },
                 'tooltip': {
                     'enabled': True,
@@ -283,29 +274,44 @@ def desenhar_numeros_relogio(chart):
     """Desenha os números de 1-12 ao redor do relógio"""
     ctx = chart.ctx
     
-    # Pegar dimensões do canvas
-    width = chart.canvas.width
-    height = chart.canvas.height
-    center_x = width / 2
-    center_y = height / 2
+    # Obter a área do gráfico
+    chartArea = chart.chartArea
+    if not chartArea:
+        return
     
-    # Raio para os números (fora do gráfico)
-    radius = min(width, height) / 2.3
+    # Calcular centro do gráfico
+    center_x = (chartArea.left + chartArea.right) / 2
+    center_y = (chartArea.top + chartArea.bottom) / 2
+    
+    # Calcular raio do gráfico
+    chart_radius = min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) / 2
+    
+    # Raio para os números (um pouco maior que o gráfico)
+    radius = chart_radius * 1.15
     
     ctx.save()
-    ctx.font = 'bold 22px Segoe UI'
+    ctx.font = 'bold 18px Segoe UI'
     ctx.fillStyle = '#1e293b'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     
-    # Números do relógio
+    # Números do relógio (12 no topo, seguindo sentido horário)
     numeros = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     
     for i, num in enumerate(numeros):
-        # Ângulo para cada número (12 no topo = -90°)
-        angulo = (i * 30 - 90) * window.Math.PI / 180
-        x = center_x + radius * window.Math.cos(angulo)
-        y = center_y + radius * window.Math.sin(angulo)
+        # Ângulo para cada número
+        # i=0 -> 12 (topo) = -90°
+        # i=1 -> 1 = -60°
+        # i=2 -> 2 = -30°
+        # i=3 -> 3 = 0° (direita)
+        # i=6 -> 6 = 90° (baixo)
+        # i=9 -> 9 = 180° (esquerda)
+        angulo_graus = i * 30 - 90
+        angulo_rad = angulo_graus * window.Math.PI / 180
+        
+        x = center_x + radius * window.Math.cos(angulo_rad)
+        y = center_y + radius * window.Math.sin(angulo_rad)
+        
         ctx.fillText(str(num), x, y)
     
     ctx.restore()
