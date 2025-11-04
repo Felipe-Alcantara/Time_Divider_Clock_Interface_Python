@@ -99,6 +99,159 @@ body {
     font-weight: 600;
 }
 
+/* Seção Informativa */
+.info-section h3 {
+    font-size: 1.2rem;
+    color: var(--cor-texto);
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.info-text {
+    color: var(--cor-texto-claro);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.steps-list {
+    margin-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.steps-list li {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+    color: var(--cor-texto-claro);
+}
+
+.steps-list strong {
+    color: var(--cor-texto);
+}
+
+/* Painel de Benefícios */
+.benefits-panel {
+    background: var(--cor-card);
+    border: 2px solid var(--cor-primaria);
+}
+
+/* Carrossel */
+.carousel-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.carousel-wrapper {
+    flex: 1;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.carousel-track {
+    display: flex;
+    gap: var(--carousel-gap, 1rem); /* espaço entre os cards sem criar folga nas bordas */
+    transition: transform 0.5s ease-in-out;
+}
+
+.carousel-track .benefit-item {
+    /* 2 itens por vez: largura exata considerando o gap */
+    flex: 0 0 calc((100% - var(--carousel-gap, 1rem)) / 2);
+    min-width: auto;
+    padding: 2rem 1rem;
+    margin: 0; /* evita espaço inicial em branco no carrossel */
+}
+
+.benefit-item {
+    text-align: center;
+    background: var(--cor-bg);
+    border-radius: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid var(--cor-border);
+}
+
+.benefit-item:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--sombra);
+}
+
+.benefit-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.benefit-item strong {
+    display: block;
+    color: var(--cor-texto);
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.benefit-item p {
+    color: var(--cor-texto-claro);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Botões do Carrossel */
+.carousel-btn {
+    background: var(--cor-primaria);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: var(--sombra);
+}
+
+.carousel-btn:hover {
+    background: var(--cor-primaria-hover);
+    transform: scale(1.1);
+}
+
+.carousel-btn:active {
+    transform: scale(0.95);
+}
+
+/* Indicadores do Carrossel */
+.carousel-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.carousel-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--cor-border);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.carousel-indicator:hover {
+    background: var(--cor-texto-claro);
+}
+
+.carousel-indicator.active {
+    background: var(--cor-primaria);
+    width: 24px;
+    border-radius: 5px;
+}
+
 /* Formulário */
 .form-group {
     margin-bottom: 1.5rem;
@@ -328,6 +481,18 @@ label {
     
     #grafico-relogio {
         max-height: 100%;
+    }
+    
+    /* Carrossel mobile */
+    .carousel-track .benefit-item {
+        flex-basis: 100%;
+        margin: 0;
+    }
+    
+    .carousel-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 1.3rem;
     }
 }
 

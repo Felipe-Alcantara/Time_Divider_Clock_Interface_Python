@@ -22,6 +22,24 @@
             </div>
         </header>
 
+        <!-- Seção Explicativa -->
+        <div class="card info-section">
+            <h2>💡 Para que serve?</h2>
+            <p class="info-text">
+                O <strong>Time Divider</strong> é uma ferramenta de produtividade que ajuda você a visualizar 
+                como seu tempo será distribuído ao longo do dia. Ideal para quem precisa gerenciar múltiplas 
+                atividades e quer ter uma visão clara de como o tempo está sendo alocado.
+            </p>
+            
+            <h3>🚀 Como usar:</h3>
+            <ol class="steps-list">
+                <li><strong>Defina o período:</strong> Escolha o horário de início (ou use o atual) e informe a duração total ou o horário final.</li>
+                <li><strong>Liste suas atividades:</strong> Digite as tarefas separadas por vírgula (ex: Estudar, Exercício, Descanso).</li>
+                <li><strong>Gere o gráfico:</strong> Clique em "Gerar Gráfico" e veja sua agenda no formato de relógio!</li>
+                <li><strong>Planeje melhor:</strong> Visualize instantaneamente quanto tempo cada atividade ocupará.</li>
+            </ol>
+        </div>
+
         <!-- Formulário -->
         <div class="card">
             <h2>📝 Configuração</h2>
@@ -84,6 +102,40 @@
             <button id="btn-baixar" class="btn-secondary">💾 Baixar Imagem</button>
         </div>
 
+        <!-- Painel de Benefícios -->
+        <div class="card benefits-panel">
+            <h2>✨ Por que usar o Time Divider?</h2>
+            <div class="carousel-container">
+                <button class="carousel-btn carousel-btn-prev" id="carousel-prev">‹</button>
+                <div class="carousel-wrapper">
+                    <div class="carousel-track" id="carousel-track">
+                        <div class="benefit-item">
+                            <span class="benefit-icon">📊</span>
+                            <strong>Visualização Clara</strong>
+                            <p>Veja seu tempo distribuído em um relógio intuitivo</p>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">⚡</span>
+                            <strong>Aumento de Produtividade</strong>
+                            <p>Organize melhor suas tarefas e evite sobrecarga</p>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">🎯</span>
+                            <strong>Gestão Eficiente</strong>
+                            <p>Divida o tempo de forma equilibrada entre atividades</p>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="benefit-icon">💾</span>
+                            <strong>Compartilhável</strong>
+                            <p>Baixe a imagem e compartilhe seu planejamento</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="carousel-btn carousel-btn-next" id="carousel-next">›</button>
+            </div>
+            <div class="carousel-indicators" id="carousel-indicators"></div>
+        </div>
+
         <!-- Rodapé -->
         <footer class="footer">
             <p>Desenvolvido com 💙 usando Brython • <a href="https://github.com/Felipe-Alcantara/Time_Divider_Clock_Interface_Python" target="_blank">Ver no GitHub</a></p>
@@ -91,5 +143,118 @@
     </div>
 
     <script type="text/python" src="app.py"></script>
+    
+    <script>
+        // Carrossel de Benefícios
+        const track = document.getElementById('carousel-track');
+        const prevBtn = document.getElementById('carousel-prev');
+        const nextBtn = document.getElementById('carousel-next');
+        const indicatorsContainer = document.getElementById('carousel-indicators');
+        const items = track.querySelectorAll('.benefit-item');
+        
+        let currentIndex = 0;
+        let autoPlayInterval;
+        const totalItems = items.length;
+        
+        // Construção dinâmica dos indicadores (quantidade depende de quantos itens aparecem por vez)
+        let indicators = [];
+        function buildIndicators() {
+            indicatorsContainer.innerHTML = '';
+            const itemsPerView = getItemsPerView();
+            const count = Math.max(1, totalItems - itemsPerView + 1);
+            for (let i = 0; i < count; i++) {
+                const indicator = document.createElement('span');
+                indicator.classList.add('carousel-indicator');
+                if (i === currentIndex) indicator.classList.add('active');
+                indicator.addEventListener('click', () => goToSlide(i));
+                indicatorsContainer.appendChild(indicator);
+            }
+            indicators = Array.from(indicatorsContainer.querySelectorAll('.carousel-indicator'));
+        }
+        
+        function getItemsPerView() {
+            if (window.innerWidth >= 768) {
+                return 2; // Desktop: mostra 2 cards
+            }
+            return 1; // Mobile: mostra 1 card
+        }
+        
+        function updateCarousel() {
+            const itemsPerView = getItemsPerView();
+            // deslocamento em pixels considerando largura real do card e gap do flex
+            const firstItem = items[0];
+            const itemWidthPx = firstItem.getBoundingClientRect().width;
+            const gap = parseFloat(getComputedStyle(track).gap || '0');
+            const offsetPx = -(currentIndex * (itemWidthPx + gap));
+            track.style.transform = `translateX(${offsetPx}px)`;
+
+            // Atualizar indicadores
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentIndex);
+            });
+        }
+        
+        function goToSlide(index) {
+            const itemsPerView = getItemsPerView();
+            const maxIndex = totalItems - itemsPerView;
+            currentIndex = Math.max(0, Math.min(index, maxIndex));
+            updateCarousel();
+            resetAutoPlay();
+        }
+        
+        function nextSlide() {
+            const itemsPerView = getItemsPerView();
+            const maxIndex = totalItems - itemsPerView;
+            currentIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
+            updateCarousel();
+        }
+        
+        function prevSlide() {
+            const itemsPerView = getItemsPerView();
+            const maxIndex = totalItems - itemsPerView;
+            currentIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
+            updateCarousel();
+        }
+        
+        function startAutoPlay() {
+            autoPlayInterval = setInterval(nextSlide, 4000); // Muda a cada 4 segundos
+        }
+        
+        function resetAutoPlay() {
+            clearInterval(autoPlayInterval);
+            startAutoPlay();
+        }
+        
+        // Event listeners
+        nextBtn.addEventListener('click', () => {
+            nextSlide();
+            resetAutoPlay();
+        });
+        
+        prevBtn.addEventListener('click', () => {
+            prevSlide();
+            resetAutoPlay();
+        });
+        
+        // Pausar autoplay ao passar o mouse
+        track.addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
+        track.addEventListener('mouseleave', startAutoPlay);
+        
+        // Responsivo
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                currentIndex = 0;
+                buildIndicators();
+                updateCarousel();
+            }, 250);
+        });
+        
+        // Iniciar
+        buildIndicators();
+        updateCarousel();
+        startAutoPlay();
+    </script>
 </body>
 </html>
