@@ -540,6 +540,10 @@ label {
     flex-direction: column;
 }
 
+.modal-large {
+    max-width: 1000px;
+}
+
 .modal-header {
     padding: 1.5rem 2rem;
     border-bottom: 2px solid var(--cor-border);
@@ -676,6 +680,146 @@ label {
     color: var(--cor-texto-claro);
     padding: 3rem 1rem;
     font-size: 1rem;
+}
+
+/* Templates */
+.template-intro {
+    text-align: center;
+    color: var(--cor-texto-claro);
+    margin-bottom: 2rem;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.templates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+/* Scrollbar customizada */
+.templates-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.templates-grid::-webkit-scrollbar-track {
+    background: var(--cor-bg);
+    border-radius: 10px;
+}
+
+.templates-grid::-webkit-scrollbar-thumb {
+    background: var(--cor-primaria);
+    border-radius: 10px;
+}
+
+.templates-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--cor-primaria-hover);
+}
+
+.template-card {
+    background: var(--cor-bg);
+    border: 2px solid var(--cor-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.template-card:hover {
+    border-color: var(--cor-primaria);
+    box-shadow: var(--sombra-grande);
+    transform: translateY(-5px);
+}
+
+.template-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.template-nome {
+    margin: 0;
+    color: var(--cor-texto);
+    font-size: 1.2rem;
+    flex: 1;
+}
+
+.template-categoria {
+    background: var(--cor-primaria);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.template-descricao {
+    color: var(--cor-texto-claro);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.template-info {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--cor-texto-claro);
+}
+
+.template-duracao,
+.template-metodologia {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.template-beneficios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.beneficio-tag {
+    background: var(--cor-sucesso);
+    color: white;
+    padding: 0.25rem 0.625rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .beneficio-tag {
+    background: #065f46;
+    color: #6ee7b7;
+}
+
+.btn-usar-template {
+    background: var(--cor-primaria);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    font-size: 0.95rem;
+    margin-top: auto;
+}
+
+.btn-usar-template:hover {
+    background: var(--cor-primaria-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--sombra);
 }
 
 /* Animações */
@@ -870,6 +1014,25 @@ label {
     
     .plan-actions {
         flex-direction: column;
+    }
+    
+    /* Templates mobile */
+    .templates-grid {
+        grid-template-columns: 1fr;
+        max-height: 70vh;
+    }
+    
+    .template-card {
+        padding: 1.25rem;
+    }
+    
+    .template-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .template-categoria {
+        align-self: flex-start;
     }
 }
 

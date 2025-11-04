@@ -40,6 +40,43 @@ def normalizar_hora(h_str):
         h_str += ":00"
     return h_str
 
+def validar_formato_hora(hora_str):
+    """Valida se a string está no formato HH:MM"""
+    hora_str = hora_str.strip()
+    if not hora_str or ":" not in hora_str:
+        return False
+    
+    try:
+        partes = hora_str.split(":")
+        if len(partes) != 2:
+            return False
+        
+        horas = int(partes[0])
+        minutos = int(partes[1])
+        
+        if horas < 0 or horas > 23:
+            return False
+        if minutos < 0 or minutos > 59:
+            return False
+        
+        return True
+    except:
+        return False
+
+def hora_string_para_datetime(hora_str):
+    """Converte string HH:MM para datetime de forma compatível com Brython"""
+    try:
+        partes = hora_str.split(":")
+        horas = int(partes[0])
+        minutos = int(partes[1])
+        
+        # Usar datetime diretamente sem strptime
+        hoje = datetime.now().date()
+        hora_obj = datetime(hoje.year, hoje.month, hoje.day, horas, minutos, 0)
+        return hora_obj
+    except Exception as e:
+        return None
+
 def mostrar_erro(mensagem):
     """Exibe mensagem de erro"""
     mensagem_erro.textContent = mensagem
@@ -71,12 +108,14 @@ def gerar_grafico(event):
             hora_inicio = datetime.now().replace(second=0, microsecond=0)
         else:
             hora_inicio_str = normalizar_hora(hora_inicio_str)
-            try:
-                hora_obj = datetime.strptime(hora_inicio_str, "%H:%M")
-                hoje = datetime.now().date()
-                hora_inicio = datetime.combine(hoje, hora_obj.time())
-            except:
-                mostrar_erro("❌ Horário inicial inválido! Use o formato HH:MM (ex: 16:00)")
+            
+            if not validar_formato_hora(hora_inicio_str):
+                mostrar_erro(f"❌ Horário inicial inválido! Use HH:MM (ex: 14:00). Valor: '{hora_inicio_str}'")
+                return
+            
+            hora_inicio = hora_string_para_datetime(hora_inicio_str)
+            if hora_inicio is None:
+                mostrar_erro(f"❌ Erro ao processar horário inicial: '{hora_inicio_str}'")
                 return
         
         # 2. PROCESSAR TEMPO TOTAL OU HORÁRIO FINAL
@@ -90,17 +129,19 @@ def gerar_grafico(event):
         if horario_final_str:
             # Usar horário final
             horario_final_str = normalizar_hora(horario_final_str)
-            try:
-                hora_obj = datetime.strptime(horario_final_str, "%H:%M")
-                hoje = datetime.now().date()
-                hora_final = datetime.combine(hoje, hora_obj.time())
-                
-                tempo_total_horas = (hora_final - hora_inicio).total_seconds() / 3600.0
-                if tempo_total_horas <= 0:
-                    mostrar_erro("❌ O horário final deve ser maior que o inicial")
-                    return
-            except:
-                mostrar_erro("❌ Horário final inválido! Use o formato HH:MM")
+            
+            if not validar_formato_hora(horario_final_str):
+                mostrar_erro(f"❌ Horário final inválido! Use HH:MM. Valor: '{horario_final_str}'")
+                return
+            
+            hora_final = hora_string_para_datetime(horario_final_str)
+            if hora_final is None:
+                mostrar_erro(f"❌ Erro ao processar horário final: '{horario_final_str}'")
+                return
+            
+            tempo_total_horas = (hora_final - hora_inicio).total_seconds() / 3600.0
+            if tempo_total_horas <= 0:
+                mostrar_erro("❌ O horário final deve ser maior que o inicial")
                 return
         else:
             # Usar tempo total
@@ -116,8 +157,16 @@ def gerar_grafico(event):
                 if tempo_total_horas <= 0:
                     mostrar_erro("❌ O tempo total deve ser positivo")
                     return
-            except:
-                mostrar_erro("❌ Tempo total inválido! Use HH:MM ou horas decimais (ex: 1.5)")
+                    
+                if tempo_total_horas > 24:
+                    mostrar_erro("❌ O tempo total não pode ser maior que 24 horas")
+                    return
+                    
+            except ValueError as e:
+                mostrar_erro(f"❌ Tempo total inválido! Use HH:MM ou decimal (ex: 2:30 ou 2.5). Valor: '{tempo_total_str}'")
+                return
+            except Exception as e:
+                mostrar_erro(f"❌ Erro ao processar tempo total: {str(e)}")
                 return
         
         # 3. PROCESSAR ATIVIDADES

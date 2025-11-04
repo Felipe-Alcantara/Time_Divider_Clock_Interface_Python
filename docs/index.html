@@ -101,10 +101,34 @@
                 <button id="btn-carregar-plano" class="btn-outline" title="Carregar plano salvo">
                     📂 Carregar Plano
                 </button>
+                <button id="btn-templates" class="btn-outline" title="Usar template pronto">
+                    ⚡ Templates
+                </button>
             </div>
             
             <div id="mensagem-erro" class="alert alert-error" style="display: none;"></div>
             <div id="mensagem-sucesso" class="alert alert-success" style="display: none;"></div>
+        </div>
+
+        <!-- Modal de Templates -->
+        <div id="modal-templates" class="modal" style="display: none;">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3>⚡ Templates de Rotina</h3>
+                    <button class="modal-close" id="close-templates">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="template-intro">
+                        Escolha um template baseado em metodologias comprovadas de produtividade e bem-estar 🎯
+                    </p>
+                    <div id="lista-templates" class="templates-grid">
+                        <!-- Templates serão preenchidos dinamicamente -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-fechar-templates" class="btn-secondary-outline">Fechar</button>
+                </div>
+            </div>
         </div>
 
         <!-- Modal de Salvar Plano -->
@@ -448,6 +472,227 @@
             if (e.key === 'Escape') {
                 fecharModalSalvar();
                 fecharModalCarregar();
+                fecharModalTemplates();
+            }
+        });
+        
+        // ========== TEMPLATES DE ROTINA ==========
+        const btnTemplates = document.getElementById('btn-templates');
+        const modalTemplates = document.getElementById('modal-templates');
+        const closeTemplates = document.getElementById('close-templates');
+        const btnFecharTemplates = document.getElementById('btn-fechar-templates');
+        const listaTemplates = document.getElementById('lista-templates');
+        
+        // Definição dos templates baseados em metodologias comprovadas
+        const templates = [
+            {
+                id: 'miracle-morning',
+                nome: '🌅 Miracle Morning',
+                descricao: 'Rotina matinal transformadora baseada no método de Hal Elrod',
+                categoria: 'Manhã',
+                duracao: '2:00',
+                horarioInicio: '06:00',
+                atividades: 'Meditação/Silêncio, Afirmações Positivas, Visualização, Exercício Físico, Leitura, Escrita/Diário',
+                beneficios: ['Aumenta energia', 'Foco mental', 'Bem-estar'],
+                metodologia: 'S.A.V.E.R.S.'
+            },
+            {
+                id: 'pomodoro-study',
+                nome: '🍅 Sessão Pomodoro',
+                descricao: 'Técnica Pomodoro clássica para estudo focado',
+                categoria: 'Estudo',
+                duracao: '2:30',
+                horarioInicio: '14:00',
+                atividades: 'Pomodoro 1, Pausa 1, Pomodoro 2, Pausa 2, Pomodoro 3, Pausa Longa',
+                beneficios: ['Foco máximo', 'Evita fadiga', 'Alta retenção'],
+                metodologia: 'Técnica Pomodoro'
+            },
+            {
+                id: 'deep-work',
+                nome: '🎯 Deep Work',
+                descricao: 'Bloco de trabalho profundo sem distrações (Cal Newport)',
+                categoria: 'Trabalho',
+                duracao: '4:00',
+                horarioInicio: '09:00',
+                atividades: 'Preparação Mental, Trabalho Profundo Bloco 1, Pausa Ativa, Trabalho Profundo Bloco 2, Revisão',
+                beneficios: ['Produtividade máxima', 'Trabalho de qualidade', 'Flow state'],
+                metodologia: 'Deep Work'
+            },
+            {
+                id: 'time-blocking',
+                nome: '📊 Time Blocking',
+                descricao: 'Dia completo organizado em blocos temáticos',
+                categoria: 'Dia Completo',
+                duracao: '8:00',
+                horarioInicio: '09:00',
+                atividades: 'Planejamento, Trabalho Criativo, Email/Admin, Almoço/Descanso, Reuniões, Trabalho Focado, Revisão do Dia, Tempo Pessoal',
+                beneficios: ['Dia estruturado', 'Menos decisões', 'Equilíbrio'],
+                metodologia: 'Time Blocking'
+            },
+            {
+                id: 'evening-routine',
+                nome: '🌙 Rotina Noturna',
+                descricao: 'Preparação para um sono de qualidade e próximo dia',
+                categoria: 'Noite',
+                duracao: '2:00',
+                horarioInicio: '20:00',
+                atividades: 'Jantar Leve, Organização do Dia, Leitura Relaxante, Higiene Pessoal, Meditação/Gratidão, Preparar Amanhã',
+                beneficios: ['Melhor sono', 'Menos ansiedade', 'Manhã produtiva'],
+                metodologia: 'Sleep Hygiene'
+            },
+            {
+                id: 'lunch-break',
+                nome: '🍽️ Pausa para Almoço',
+                descricao: 'Intervalo de almoço balanceado para recarga de energia',
+                categoria: 'Intervalo',
+                duracao: '1:30',
+                horarioInicio: '12:00',
+                atividades: 'Desconexão Digital, Refeição Consciente, Caminhada Curta, Descanso Mental',
+                beneficios: ['Recarga de energia', 'Digestão melhor', 'Clareza mental'],
+                metodologia: 'Mindful Eating'
+            },
+            {
+                id: 'workout-morning',
+                nome: '💪 Manhã Fitness',
+                descricao: 'Rotina matinal focada em saúde e energia',
+                categoria: 'Exercício',
+                duracao: '1:30',
+                horarioInicio: '06:30',
+                atividades: 'Alongamento, Aquecimento, Treino Intenso, Relaxamento, Hidratação e Nutrição',
+                beneficios: ['Energia o dia todo', 'Saúde cardiovascular', 'Bem-estar'],
+                metodologia: 'Morning Exercise'
+            },
+            {
+                id: 'creative-flow',
+                nome: '🎨 Fluxo Criativo',
+                descricao: 'Sessão otimizada para trabalho criativo e inovação',
+                categoria: 'Criatividade',
+                duracao: '3:00',
+                horarioInicio: '10:00',
+                atividades: 'Inspiração/Pesquisa, Brainstorming, Criação Intensiva, Pausa Criativa, Refinamento, Documentação',
+                beneficios: ['Ideias inovadoras', 'Flow criativo', 'Resultados únicos'],
+                metodologia: 'Creative Flow State'
+            },
+            {
+                id: 'exam-prep',
+                nome: '📚 Preparação para Provas',
+                descricao: 'Sessão intensiva de estudo pré-exame',
+                categoria: 'Estudo',
+                duracao: '4:00',
+                horarioInicio: '14:00',
+                atividades: 'Revisão Teórica, Exercícios Práticos, Intervalo Mental, Simulado e Teste, Análise de Erros, Consolidação Final',
+                beneficios: ['Retenção máxima', 'Confiança', 'Desempenho superior'],
+                metodologia: 'Active Recall + Spaced Repetition'
+            },
+            {
+                id: 'balanced-weekend',
+                nome: '⚖️ Fim de Semana Equilibrado',
+                descricao: 'Sábado ou domingo balanceado entre produtividade e lazer',
+                categoria: 'Fim de Semana',
+                duracao: '8:00',
+                horarioInicio: '09:00',
+                atividades: 'Despertar Tranquilo, Exercício/Hobby, Projeto Pessoal, Almoço Social, Tempo em Família, Autocuidado, Planejamento Semanal, Entretenimento',
+                beneficios: ['Recarga completa', 'Conexões sociais', 'Preparado para semana'],
+                metodologia: 'Work-Life Balance'
+            },
+            {
+                id: 'mindfulness-hour',
+                nome: '🧘 Hora Mindfulness',
+                descricao: 'Sessão dedicada ao bem-estar mental e emocional',
+                categoria: 'Bem-estar',
+                duracao: '1:00',
+                horarioInicio: '18:00',
+                atividades: 'Respiração Consciente, Meditação Guiada, Reflexão e Journaling, Prática de Gratidão',
+                beneficios: ['Reduz estresse', 'Clareza mental', 'Equilíbrio emocional'],
+                metodologia: 'Mindfulness Practice'
+            },
+            {
+                id: 'power-hour',
+                nome: '⚡ Power Hour',
+                descricao: 'Uma hora de máxima produtividade para tarefas importantes',
+                categoria: 'Produtividade',
+                duracao: '1:00',
+                horarioInicio: '09:00',
+                atividades: 'Tarefa Prioritária 1, Tarefa Prioritária 2, Tarefa Prioritária 3',
+                beneficios: ['Máxima eficiência', 'Conquista objetivos', 'Momentum positivo'],
+                metodologia: 'Eat That Frog'
+            }
+        ];
+        
+        // Renderizar templates
+        function renderizarTemplates() {
+            listaTemplates.innerHTML = templates.map(template => `
+                <div class="template-card" data-id="${template.id}">
+                    <div class="template-header">
+                        <h4 class="template-nome">${template.nome}</h4>
+                        <span class="template-categoria">${template.categoria}</span>
+                    </div>
+                    <p class="template-descricao">${template.descricao}</p>
+                    <div class="template-info">
+                        <span class="template-duracao">⏱️ ${template.duracao}</span>
+                        <span class="template-metodologia">📖 ${template.metodologia}</span>
+                    </div>
+                    <div class="template-beneficios">
+                        ${template.beneficios.map(b => `<span class="beneficio-tag">✓ ${b}</span>`).join('')}
+                    </div>
+                    <button class="btn-usar-template" data-id="${template.id}">
+                        ✨ Usar Template
+                    </button>
+                </div>
+            `).join('');
+            
+            // Adicionar eventos aos botões
+            document.querySelectorAll('.btn-usar-template').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    const template = templates.find(t => t.id === id);
+                    if (template) {
+                        aplicarTemplate(template);
+                    }
+                });
+            });
+        }
+        
+        // Aplicar template ao formulário
+        function aplicarTemplate(template) {
+            setFormData({
+                horarioInicio: template.horarioInicio,
+                tempoTotal: template.duracao,
+                horarioFinal: '',
+                atividades: template.atividades
+            });
+            
+            fecharModalTemplates();
+            mostrarSucesso(`✅ Template "${template.nome}" aplicado! Ajuste conforme necessário.`);
+            
+            // Scroll suave para o formulário
+            document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        // Abrir modal de templates
+        btnTemplates.addEventListener('click', () => {
+            renderizarTemplates();
+            modalTemplates.style.display = 'flex';
+        });
+        
+        // Fechar modal de templates
+        function fecharModalTemplates() {
+            modalTemplates.style.display = 'none';
+        }
+        
+        closeTemplates.addEventListener('click', fecharModalTemplates);
+        btnFecharTemplates.addEventListener('click', fecharModalTemplates);
+        
+        // Fechar modal ao clicar fora (atualizar)
+        window.addEventListener('click', (e) => {
+            if (e.target === modalSalvar) {
+                fecharModalSalvar();
+            }
+            if (e.target === modalCarregar) {
+                fecharModalCarregar();
+            }
+            if (e.target === modalTemplates) {
+                fecharModalTemplates();
             }
         });
         
