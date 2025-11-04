@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['Time Divider.py'],
+    ['src\\Time Divider.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['felixotime2 (1).ico'],
+    icon=['Icone\\felixotime2 (1).ico'],
 )
