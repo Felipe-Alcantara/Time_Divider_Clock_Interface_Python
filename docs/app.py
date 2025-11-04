@@ -251,6 +251,15 @@ def gerar_grafico(event):
         # Mostrar container do gráfico
         grafico_container.style.display = "block"
         
+        # 8. SALVAR NO HISTÓRICO
+        dados_form = {
+            'horarioInicio': hora_inicio_str if hora_inicio_str else '',
+            'tempoTotal': tempo_total_str,
+            'horarioFinal': horario_final_str,
+            'atividades': atividades_str
+        }
+        window.salvarNoHistorico(dados_form)
+        
         # Scroll suave até o gráfico
         grafico_container.scrollIntoView({"behavior": "smooth", "block": "start"})
         

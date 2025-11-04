@@ -187,6 +187,23 @@
             <button id="btn-baixar" class="btn-secondary">💾 Baixar Imagem</button>
         </div>
 
+        <!-- Histórico de Planejamentos -->
+        <div class="card" id="historico-container" style="display: none;">
+            <div class="historico-header">
+                <h2>📜 Histórico de Planejamentos</h2>
+                <button id="btn-limpar-historico" class="btn-icon-text" title="Limpar todo o histórico">
+                    🗑️ Limpar Histórico
+                </button>
+            </div>
+            <p class="historico-subtitle">Seus últimos 10 planejamentos gerados</p>
+            <div id="lista-historico" class="historico-lista">
+                <!-- Lista de histórico será preenchida dinamicamente -->
+            </div>
+            <p id="sem-historico" class="sem-historico" style="display: none;">
+                Nenhum planejamento gerado ainda. Crie seu primeiro plano! 📊
+            </p>
+        </div>
+
         <!-- Painel de Benefícios -->
         <div class="card benefits-panel">
             <h2>✨ Por que usar o Time Divider?</h2>
@@ -695,6 +712,146 @@
                 fecharModalTemplates();
             }
         });
+        
+        // ========== HISTÓRICO DE PLANEJAMENTOS ==========
+        const historicoContainer = document.getElementById('historico-container');
+        const listaHistorico = document.getElementById('lista-historico');
+        const semHistorico = document.getElementById('sem-historico');
+        const btnLimparHistorico = document.getElementById('btn-limpar-historico');
+        
+        // Salvar planejamento no histórico (chamado quando gráfico é gerado)
+        function salvarNoHistorico(dados) {
+            const historico = getHistorico();
+            const novoItem = {
+                id: Date.now(),
+                dados: dados,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Adicionar no início e manter apenas últimos 10
+            historico.unshift(novoItem);
+            const historicoLimitado = historico.slice(0, 10);
+            
+            localStorage.setItem('timeDividerHistorico', JSON.stringify(historicoLimitado));
+            renderizarHistorico();
+        }
+        
+        // Obter histórico
+        function getHistorico() {
+            const historico = localStorage.getItem('timeDividerHistorico');
+            return historico ? JSON.parse(historico) : [];
+        }
+        
+        // Deletar item do histórico
+        function deletarDoHistorico(id) {
+            let historico = getHistorico();
+            historico = historico.filter(h => h.id !== id);
+            localStorage.setItem('timeDividerHistorico', JSON.stringify(historico));
+            renderizarHistorico();
+        }
+        
+        // Limpar todo o histórico
+        function limparHistorico() {
+            if (confirm('Tem certeza que deseja limpar todo o histórico de planejamentos?')) {
+                localStorage.removeItem('timeDividerHistorico');
+                renderizarHistorico();
+                mostrarSucesso('🗑️ Histórico limpo com sucesso!');
+            }
+        }
+        
+        // Renderizar histórico
+        function renderizarHistorico() {
+            const historico = getHistorico();
+            
+            if (historico.length === 0) {
+                listaHistorico.innerHTML = '';
+                semHistorico.style.display = 'block';
+                historicoContainer.style.display = 'none';
+                return;
+            }
+            
+            historicoContainer.style.display = 'block';
+            semHistorico.style.display = 'none';
+            
+            listaHistorico.innerHTML = historico.map(item => {
+                const data = new Date(item.timestamp);
+                const dataFormatada = data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+                const atividades = item.dados.atividades.split(',').map(a => a.trim());
+                
+                return `
+                    <div class="historico-item" data-id="${item.id}">
+                        <div class="historico-item-header">
+                            <div class="historico-info">
+                                <div class="historico-timestamp">
+                                    <span>🕐</span>
+                                    <span>${dataFormatada}</span>
+                                </div>
+                                <div class="historico-detalhes">
+                                    <div class="historico-detalhe">
+                                        <span>⏱️</span>
+                                        <span><strong>Início:</strong> ${item.dados.horarioInicio || 'Hora atual'}</span>
+                                    </div>
+                                    <div class="historico-detalhe">
+                                        <span>⏳</span>
+                                        <span><strong>Duração:</strong> ${item.dados.tempoTotal || item.dados.horarioFinal || 'N/A'}</span>
+                                    </div>
+                                    <div class="historico-detalhe">
+                                        <span>📋</span>
+                                        <span><strong>${atividades.length}</strong> atividade(s)</span>
+                                    </div>
+                                </div>
+                                <div class="historico-atividades">
+                                    <div class="historico-atividades-titulo">Atividades:</div>
+                                    <div class="historico-atividades-lista">
+                                        ${atividades.map(ativ => `<span class="atividade-tag">${ativ}</span>`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="historico-acoes">
+                                <button class="btn-icon-text btn-reutilizar" data-id="${item.id}" title="Reutilizar este planejamento">
+                                    ♻️ Reutilizar
+                                </button>
+                                <button class="btn-icon btn-deletar-historico" data-id="${item.id}" title="Remover do histórico">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Adicionar eventos aos botões
+            document.querySelectorAll('.btn-reutilizar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.closest('.btn-reutilizar').dataset.id);
+                    const item = historico.find(h => h.id === id);
+                    if (item) {
+                        setFormData(item.dados);
+                        mostrarSucesso('✅ Planejamento reutilizado! Ajuste conforme necessário.');
+                        
+                        // Scroll suave para o formulário
+                        document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.btn-deletar-historico').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    deletarDoHistorico(id);
+                    mostrarSucesso('🗑️ Item removido do histórico!');
+                });
+            });
+        }
+        
+        // Eventos
+        btnLimparHistorico.addEventListener('click', limparHistorico);
+        
+        // Renderizar histórico ao carregar página
+        renderizarHistorico();
+        
+        // Expor função globalmente para que o Python possa chamar
+        window.salvarNoHistorico = salvarNoHistorico;
         
         // ========== CARROSSEL DE BENEFÍCIOS ==========
         const track = document.getElementById('carousel-track');
