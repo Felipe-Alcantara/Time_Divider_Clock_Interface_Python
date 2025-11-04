@@ -94,7 +94,62 @@
 
             <button id="btn-gerar" class="btn-primary">✨ Gerar Gráfico</button>
             
+            <div class="plan-actions">
+                <button id="btn-salvar-plano" class="btn-outline" title="Salvar este plano">
+                    💾 Salvar Plano
+                </button>
+                <button id="btn-carregar-plano" class="btn-outline" title="Carregar plano salvo">
+                    📂 Carregar Plano
+                </button>
+            </div>
+            
             <div id="mensagem-erro" class="alert alert-error" style="display: none;"></div>
+            <div id="mensagem-sucesso" class="alert alert-success" style="display: none;"></div>
+        </div>
+
+        <!-- Modal de Salvar Plano -->
+        <div id="modal-salvar" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>💾 Salvar Plano</h3>
+                    <button class="modal-close" id="close-salvar">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nome-plano">
+                            <span class="icon">📝</span>
+                            Nome do Plano
+                        </label>
+                        <input type="text" id="nome-plano" placeholder="Ex: Rotina Matinal, Tarde de Estudos..." class="input">
+                        <small class="hint">Dê um nome descritivo para identificar este plano</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-cancelar-salvar" class="btn-secondary-outline">Cancelar</button>
+                    <button id="btn-confirmar-salvar" class="btn-primary">💾 Salvar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Carregar Plano -->
+        <div id="modal-carregar" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📂 Carregar Plano</h3>
+                    <button class="modal-close" id="close-carregar">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="lista-planos" class="planos-lista">
+                        <!-- Lista de planos será preenchida dinamicamente -->
+                    </div>
+                    <p id="sem-planos" class="sem-planos" style="display: none;">
+                        Nenhum plano salvo ainda. Crie um plano e salve para aparecer aqui! 📋
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-fechar-carregar" class="btn-secondary-outline">Fechar</button>
+                </div>
+            </div>
         </div>
 
         <!-- Área do Gráfico -->
@@ -175,6 +230,225 @@
             setTimeout(() => {
                 themeToggle.style.transform = 'rotate(0deg)';
             }, 500);
+        });
+        
+        // ========== GERENCIAMENTO DE PLANOS ==========
+        const btnSalvarPlano = document.getElementById('btn-salvar-plano');
+        const btnCarregarPlano = document.getElementById('btn-carregar-plano');
+        const modalSalvar = document.getElementById('modal-salvar');
+        const modalCarregar = document.getElementById('modal-carregar');
+        const closeSalvar = document.getElementById('close-salvar');
+        const closeCarregar = document.getElementById('close-carregar');
+        const btnCancelarSalvar = document.getElementById('btn-cancelar-salvar');
+        const btnFecharCarregar = document.getElementById('btn-fechar-carregar');
+        const btnConfirmarSalvar = document.getElementById('btn-confirmar-salvar');
+        const nomePlanoInput = document.getElementById('nome-plano');
+        const listaPlanos = document.getElementById('lista-planos');
+        const semPlanos = document.getElementById('sem-planos');
+        const mensagemSucesso = document.getElementById('mensagem-sucesso');
+        
+        // Obter dados do formulário
+        function getFormData() {
+            return {
+                horarioInicio: document.getElementById('horario-inicio').value,
+                tempoTotal: document.getElementById('tempo-total').value,
+                horarioFinal: document.getElementById('horario-final').value,
+                atividades: document.getElementById('atividades').value
+            };
+        }
+        
+        // Preencher formulário com dados
+        function setFormData(data) {
+            document.getElementById('horario-inicio').value = data.horarioInicio || '';
+            document.getElementById('tempo-total').value = data.tempoTotal || '';
+            document.getElementById('horario-final').value = data.horarioFinal || '';
+            document.getElementById('atividades').value = data.atividades || '';
+        }
+        
+        // Salvar plano no localStorage
+        function salvarPlano(nome, dados) {
+            const planos = getPlanosSalvos();
+            const novoPlano = {
+                id: Date.now(),
+                nome: nome,
+                dados: dados,
+                dataCriacao: new Date().toISOString()
+            };
+            planos.push(novoPlano);
+            localStorage.setItem('timeDividerPlanos', JSON.stringify(planos));
+            return novoPlano;
+        }
+        
+        // Obter planos salvos
+        function getPlanosSalvos() {
+            const planos = localStorage.getItem('timeDividerPlanos');
+            return planos ? JSON.parse(planos) : [];
+        }
+        
+        // Deletar plano
+        function deletarPlano(id) {
+            let planos = getPlanosSalvos();
+            planos = planos.filter(p => p.id !== id);
+            localStorage.setItem('timeDividerPlanos', JSON.stringify(planos));
+        }
+        
+        // Mostrar mensagem de sucesso
+        function mostrarSucesso(mensagem) {
+            mensagemSucesso.textContent = mensagem;
+            mensagemSucesso.style.display = 'block';
+            setTimeout(() => {
+                mensagemSucesso.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Abrir modal de salvar
+        btnSalvarPlano.addEventListener('click', () => {
+            const dados = getFormData();
+            
+            // Validar se há dados para salvar
+            if (!dados.atividades.trim()) {
+                document.getElementById('mensagem-erro').textContent = '⚠️ Preencha pelo menos as atividades antes de salvar!';
+                document.getElementById('mensagem-erro').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('mensagem-erro').style.display = 'none';
+                }, 3000);
+                return;
+            }
+            
+            nomePlanoInput.value = '';
+            modalSalvar.style.display = 'flex';
+            nomePlanoInput.focus();
+        });
+        
+        // Fechar modal de salvar
+        function fecharModalSalvar() {
+            modalSalvar.style.display = 'none';
+        }
+        
+        closeSalvar.addEventListener('click', fecharModalSalvar);
+        btnCancelarSalvar.addEventListener('click', fecharModalSalvar);
+        
+        // Confirmar salvar plano
+        btnConfirmarSalvar.addEventListener('click', () => {
+            const nome = nomePlanoInput.value.trim();
+            
+            if (!nome) {
+                alert('Por favor, digite um nome para o plano!');
+                return;
+            }
+            
+            const dados = getFormData();
+            salvarPlano(nome, dados);
+            
+            fecharModalSalvar();
+            mostrarSucesso(`✅ Plano "${nome}" salvo com sucesso!`);
+        });
+        
+        // Enter para salvar
+        nomePlanoInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                btnConfirmarSalvar.click();
+            }
+        });
+        
+        // Renderizar lista de planos
+        function renderizarPlanos() {
+            const planos = getPlanosSalvos();
+            
+            if (planos.length === 0) {
+                listaPlanos.innerHTML = '';
+                semPlanos.style.display = 'block';
+                return;
+            }
+            
+            semPlanos.style.display = 'none';
+            
+            listaPlanos.innerHTML = planos.map(plano => {
+                const data = new Date(plano.dataCriacao);
+                const dataFormatada = data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+                
+                return `
+                    <div class="plano-item" data-id="${plano.id}">
+                        <div class="plano-info">
+                            <h4 class="plano-nome">📋 ${plano.nome}</h4>
+                            <p class="plano-detalhes">
+                                <small>🕐 ${plano.dados.horarioInicio || 'Hora atual'} • 
+                                ⏱️ ${plano.dados.tempoTotal || plano.dados.horarioFinal || 'N/A'} • 
+                                ${plano.dados.atividades.split(',').length} atividade(s)</small>
+                            </p>
+                            <p class="plano-data">
+                                <small>💾 Salvo em ${dataFormatada}</small>
+                            </p>
+                        </div>
+                        <div class="plano-acoes">
+                            <button class="btn-icon btn-carregar" data-id="${plano.id}" title="Carregar este plano">
+                                📥
+                            </button>
+                            <button class="btn-icon btn-deletar" data-id="${plano.id}" title="Excluir este plano">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Adicionar eventos aos botões
+            document.querySelectorAll('.btn-carregar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const plano = planos.find(p => p.id === id);
+                    if (plano) {
+                        setFormData(plano.dados);
+                        modalCarregar.style.display = 'none';
+                        mostrarSucesso(`✅ Plano "${plano.nome}" carregado!`);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.btn-deletar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.dataset.id);
+                    const plano = planos.find(p => p.id === id);
+                    
+                    if (confirm(`Tem certeza que deseja excluir o plano "${plano.nome}"?`)) {
+                        deletarPlano(id);
+                        renderizarPlanos();
+                        mostrarSucesso(`🗑️ Plano "${plano.nome}" excluído!`);
+                    }
+                });
+            });
+        }
+        
+        // Abrir modal de carregar
+        btnCarregarPlano.addEventListener('click', () => {
+            renderizarPlanos();
+            modalCarregar.style.display = 'flex';
+        });
+        
+        // Fechar modal de carregar
+        function fecharModalCarregar() {
+            modalCarregar.style.display = 'none';
+        }
+        
+        closeCarregar.addEventListener('click', fecharModalCarregar);
+        btnFecharCarregar.addEventListener('click', fecharModalCarregar);
+        
+        // Fechar modal ao clicar fora
+        window.addEventListener('click', (e) => {
+            if (e.target === modalSalvar) {
+                fecharModalSalvar();
+            }
+            if (e.target === modalCarregar) {
+                fecharModalCarregar();
+            }
+        });
+        
+        // ESC para fechar modais
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                fecharModalSalvar();
+                fecharModalCarregar();
+            }
         });
         
         // ========== CARROSSEL DE BENEFÍCIOS ==========
