@@ -23,6 +23,16 @@ CORES = [
     '#14b8a6', '#f97316', '#22c55e', '#e11d48', '#eab308'
 ]
 
+def converter_hex_para_rgba(hex_color, alpha):
+    """Converte cor hexadecimal para rgba com transparência"""
+    # Remove o # se existir
+    hex_color = hex_color.lstrip('#')
+    # Converte para RGB
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+    return f'rgba({r}, {g}, {b}, {alpha})'
+
 def normalizar_hora(h_str):
     """Normaliza entrada de hora (adiciona :00 se necessário)"""
     h_str = h_str.strip()
@@ -139,57 +149,51 @@ def gerar_grafico(event):
             horarios_fim.append(hora_atual)
         
         # 5. PREPARAR DADOS PARA O GRÁFICO
-        # Precisamos preencher 12 horas completas (360°) no relógio
-        # Criar array de 12 horas, cada uma com 30°
-        dados_por_hora = [0] * 12  # 12 posições, uma para cada hora
-        cores_por_hora = ['rgba(200, 200, 200, 0.1)'] * 12  # Cor cinza transparente padrão
-        labels_por_hora = [''] * 12  # Sem label por padrão
+        # Cada atividade será um bloco contínuo no gráfico
+        dados_atividades = []
+        cores_atividades_grafico = []
+        labels_atividades = []
         
-        # Preencher as horas com as atividades
+        # Calcular a posição inicial no relógio (em graus a partir das 12h)
+        hora_12h = hora_inicio.hour % 12
+        minutos = hora_inicio.minute
+        
+        # Converter para ângulo: 12h = 0°, 1h = 30°, etc.
+        angulo_inicial = (hora_12h * 30) + (minutos * 0.5)  # 0.5° por minuto
+        
+        # Adicionar bloco vazio inicial se necessário
+        if angulo_inicial > 0.1:  # Mais de ~12 segundos
+            dados_atividades.append(angulo_inicial)
+            cores_atividades_grafico.append('rgba(200, 200, 200, 0.1)')
+            labels_atividades.append('Livre')
+        
+        # Adicionar as atividades diretamente
         for i in range(num_atividades):
-            hora_ini = horarios_inicio[i].hour % 12
-            hora_fim = horarios_fim[i].hour % 12
-            minutos_ini = horarios_inicio[i].minute
-            minutos_fim = horarios_fim[i].minute
-            
-            # Calcular quantos "slots" de hora essa atividade ocupa
-            tempo_horas = tempo_por_atividade
-            
-            # Posição inicial no relógio (0-11)
-            pos_inicial = hora_ini
-            
-            # Distribuir a atividade pelas horas que ela ocupa
-            horas_restantes = tempo_horas
-            pos_atual = pos_inicial
-            
-            while horas_restantes > 0:
-                # Quanto dessa hora pertence a essa atividade
-                if pos_atual == pos_inicial and minutos_ini > 0:
-                    # Primeira hora pode começar no meio
-                    fracao_hora = min(1 - (minutos_ini / 60), horas_restantes)
-                else:
-                    fracao_hora = min(1, horas_restantes)
-                
-                # Se essa posição ainda não foi preenchida, preencher
-                if dados_por_hora[pos_atual] == 0:
-                    dados_por_hora[pos_atual] = fracao_hora * 30  # Converter para graus
-                    cores_por_hora[pos_atual] = CORES[i % len(CORES)]
-                    labels_por_hora[pos_atual] = atividades[i]
-                else:
-                    # Acumular na mesma hora (se houver sobreposição)
-                    dados_por_hora[pos_atual] += fracao_hora * 30
-                
-                horas_restantes -= fracao_hora
-                pos_atual = (pos_atual + 1) % 12
+            # Calcular o ângulo em graus que essa atividade ocupa
+            angulo_graus = tempo_por_atividade * 30  # 30° por hora
+            dados_atividades.append(angulo_graus)
+            # Adicionar transparência (alpha) às cores das atividades
+            cor_base = CORES[i % len(CORES)]
+            # Converter hex para rgba com alpha 0.7
+            cor_rgba = converter_hex_para_rgba(cor_base, 0.7)
+            cores_atividades_grafico.append(cor_rgba)
+            labels_atividades.append(atividades[i])
         
-        # Garantir que todas as posições tenham pelo menos um valor mínimo para aparecer
-        for i in range(12):
-            if dados_por_hora[i] == 0:
-                dados_por_hora[i] = 30  # 30° = 1 hora completa vazia
+        # Calcular quanto espaço vazio temos no final (se houver)
+        total_usado = sum(dados_atividades)
+        espaco_vazio = 360 - total_usado
+        
+        if espaco_vazio > 0.1:  # Se sobrar mais de 0.1°
+            dados_atividades.append(espaco_vazio)
+            cores_atividades_grafico.append('rgba(200, 200, 200, 0.1)')
+            labels_atividades.append('Livre')
+        
+        # O gráfico sempre começa às 12h no topo (rotação -90)
+        rotacao_inicial = -90
         
         # 6. CRIAR/ATUALIZAR GRÁFICO COM CHART.JS
-        criar_grafico_chartjs(dados_por_hora, cores_por_hora, labels_por_hora, 
-                              horarios_inicio, horarios_fim, atividades)
+        criar_grafico_chartjs(dados_atividades, cores_atividades_grafico, labels_atividades, 
+                              horarios_inicio, horarios_fim, atividades, rotacao_inicial)
         
         # 7. CRIAR LEGENDA (usar cores originais das atividades)
         cores_atividades = [CORES[i % len(CORES)] for i in range(num_atividades)]
@@ -205,7 +209,7 @@ def gerar_grafico(event):
         mostrar_erro(f"❌ Erro inesperado: {str(e)}")
         window.console.log(f"Erro detalhado: {e}")
 
-def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, atividades):
+def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, atividades, rotacao_inicial):
     """Cria o gráfico de relógio usando Chart.js (tipo Doughnut)"""
     global grafico_atual
     
@@ -216,21 +220,43 @@ def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, a
     # Preparar dados no formato Chart.js
     Chart = window.Chart
     
-    # Plugin para desenhar números do relógio
+    # Criar mapeamento de atividades para horários (para o tooltip)
+    horarios_map = {}
+    for i, ativ in enumerate(atividades):
+        inicio_str = horarios_inicio[i].strftime('%H:%M')
+        fim_str = horarios_fim[i].strftime('%H:%M')
+        horarios_map[ativ] = f"{inicio_str} - {fim_str}"
+    
+    # Plugin para desenhar círculo e marcações ANTES dos dados
+    plugin_fundo = {
+        'id': 'fundoRelogio',
+        'beforeDatasetsDraw': lambda chart, args, options: desenhar_fundo_relogio(chart)
+    }
+    
+    # Plugin para desenhar números do relógio DEPOIS dos dados
     plugin_numeros = {
         'id': 'numerosRelogio',
         'afterDatasetsDraw': lambda chart, args, options: desenhar_numeros_relogio(chart)
     }
     
+    # Função para formatar o tooltip
+    def formatar_tooltip(context):
+        label = labels[context.dataIndex]
+        if label == 'Livre' or label == '':
+            return 'Livre'
+        else:
+            horario = horarios_map.get(label, '')
+            return f"{label}\n{horario}"
+    
     config = {
         'type': 'doughnut',
         'data': {
-            'labels': ['12h', '1h', '2h', '3h', '4h', '5h', '6h', '7h', '8h', '9h', '10h', '11h'],
+            'labels': labels,
             'datasets': [{
-                'data': dados,  # Array de 12 valores (30° cada)
+                'data': dados,
                 'backgroundColor': cores,
-                'borderWidth': 2,
-                'borderColor': '#ffffff',
+                'borderWidth': 1,
+                'borderColor': '#000000',
                 'circumference': 360,
                 'rotation': 0
             }]
@@ -238,7 +264,7 @@ def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, a
         'options': {
             'responsive': True,
             'maintainAspectRatio': True,
-            'rotation': -90,  # Começa no topo (12h)
+            'rotation': rotacao_inicial,  # Usa a rotação calculada baseada no horário de início
             'circumference': 360,
             'cutout': '35%',
             'layout': {
@@ -258,20 +284,30 @@ def criar_grafico_chartjs(dados, cores, labels, horarios_inicio, horarios_fim, a
                 },
                 'tooltip': {
                     'enabled': True,
+                    'backgroundColor': 'rgba(0, 0, 0, 0.8)',
+                    'titleFont': {
+                        'size': 14,
+                        'weight': 'bold'
+                    },
+                    'bodyFont': {
+                        'size': 12
+                    },
+                    'padding': 12,
+                    'displayColors': True,
                     'callbacks': {
-                        'label': lambda context: labels[context.dataIndex] if labels[context.dataIndex] else 'Livre'
+                        'label': formatar_tooltip
                     }
                 }
             }
         },
-        'plugins': [plugin_numeros]
+        'plugins': [plugin_fundo, plugin_numeros]
     }
     
     ctx = canvas.getContext('2d')
     grafico_atual = Chart.new(ctx, config)
 
-def desenhar_numeros_relogio(chart):
-    """Desenha os números de 1-12 ao redor do relógio"""
+def desenhar_fundo_relogio(chart):
+    """Desenha o círculo branco e as marcações de hora ANTES dos dados"""
     ctx = chart.ctx
     
     # Obter a área do gráfico
@@ -286,31 +322,73 @@ def desenhar_numeros_relogio(chart):
     # Calcular raio do gráfico
     chart_radius = min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) / 2
     
-    # Raio para os números (um pouco maior que o gráfico)
-    radius = chart_radius * 1.15
+    ctx.save()
+    
+    # 1. Desenhar círculo branco de fundo com borda preta
+    ctx.beginPath()
+    ctx.arc(center_x, center_y, chart_radius, 0, 2 * window.Math.PI)
+    ctx.fillStyle = 'white'
+    ctx.fill()
+    ctx.strokeStyle = '#000000'
+    ctx.lineWidth = 2
+    ctx.stroke()
+    
+    # 2. Desenhar as marcações das horas
+    for i in range(12):
+        angulo_graus = i * 30 - 90
+        angulo_rad = angulo_graus * window.Math.PI / 180
+        
+        # Ponto interno (90% do raio)
+        x_interno = center_x + (chart_radius * 0.9) * window.Math.cos(angulo_rad)
+        y_interno = center_y + (chart_radius * 0.9) * window.Math.sin(angulo_rad)
+        
+        # Ponto externo (100% do raio - na borda)
+        x_externo = center_x + chart_radius * window.Math.cos(angulo_rad)
+        y_externo = center_y + chart_radius * window.Math.sin(angulo_rad)
+        
+        # Desenhar linha
+        ctx.beginPath()
+        ctx.moveTo(x_interno, y_interno)
+        ctx.lineTo(x_externo, y_externo)
+        ctx.strokeStyle = '#000000'
+        ctx.lineWidth = 2
+        ctx.stroke()
+    
+    ctx.restore()
+
+def desenhar_numeros_relogio(chart):
+    """Desenha os números de 1-12 ao redor do relógio DEPOIS dos dados"""
+    ctx = chart.ctx
+    
+    # Obter a área do gráfico
+    chartArea = chart.chartArea
+    if not chartArea:
+        return
+    
+    # Calcular centro do gráfico
+    center_x = (chartArea.left + chartArea.right) / 2
+    center_y = (chartArea.top + chartArea.bottom) / 2
+    
+    # Calcular raio do gráfico
+    chart_radius = min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) / 2
     
     ctx.save()
+    
+    # Desenhar os números das horas (75% do raio)
     ctx.font = 'bold 18px Segoe UI'
     ctx.fillStyle = '#1e293b'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     
-    # Números do relógio (12 no topo, seguindo sentido horário)
     numeros = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     
     for i, num in enumerate(numeros):
-        # Ângulo para cada número
-        # i=0 -> 12 (topo) = -90°
-        # i=1 -> 1 = -60°
-        # i=2 -> 2 = -30°
-        # i=3 -> 3 = 0° (direita)
-        # i=6 -> 6 = 90° (baixo)
-        # i=9 -> 9 = 180° (esquerda)
         angulo_graus = i * 30 - 90
         angulo_rad = angulo_graus * window.Math.PI / 180
         
-        x = center_x + radius * window.Math.cos(angulo_rad)
-        y = center_y + radius * window.Math.sin(angulo_rad)
+        # Posição dos números (75% do raio)
+        x = center_x + (chart_radius * 0.75) * window.Math.cos(angulo_rad)
+        y = center_y + (chart_radius * 0.75) * window.Math.sin(angulo_rad)
         
         ctx.fillText(str(num), x, y)
     
