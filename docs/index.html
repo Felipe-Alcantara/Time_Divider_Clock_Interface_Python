@@ -104,7 +104,15 @@
                 <button id="btn-templates" class="btn-outline" title="Usar template pronto">
                     ⚡ Templates
                 </button>
+                <button id="btn-exportar" class="btn-outline" title="Exportar configuração atual">
+                    📤 Exportar
+                </button>
+                <button id="btn-importar" class="btn-outline" title="Importar configuração de arquivo">
+                    📥 Importar
+                </button>
             </div>
+            
+            <input type="file" id="input-importar" accept=".json" style="display: none;">
             
             <div id="mensagem-erro" class="alert alert-error" style="display: none;"></div>
             <div id="mensagem-sucesso" class="alert alert-success" style="display: none;"></div>
@@ -163,6 +171,20 @@
                     <button class="modal-close" id="close-carregar">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <div class="backup-actions">
+                        <button id="btn-exportar-backup" class="btn-backup" title="Exportar todos os dados (planos, histórico, tema)">
+                            💾 Backup Completo
+                        </button>
+                        <button id="btn-importar-backup" class="btn-backup" title="Importar backup completo">
+                            📥 Restaurar Backup
+                        </button>
+                    </div>
+                    <input type="file" id="input-importar-backup" accept=".json" style="display: none;">
+                    
+                    <div class="divider-section">
+                        <span>Planos Salvos</span>
+                    </div>
+                    
                     <div id="lista-planos" class="planos-lista">
                         <!-- Lista de planos será preenchida dinamicamente -->
                     </div>
@@ -491,6 +513,79 @@
                 fecharModalCarregar();
                 fecharModalTemplates();
             }
+        });
+        
+        // ========== BACKUP COMPLETO ==========
+        const btnExportarBackup = document.getElementById('btn-exportar-backup');
+        const btnImportarBackup = document.getElementById('btn-importar-backup');
+        const inputImportarBackup = document.getElementById('input-importar-backup');
+        
+        // Eventos de backup completo
+        btnExportarBackup.addEventListener('click', () => {
+            window.exportarTodosDados();
+        });
+        
+        btnImportarBackup.addEventListener('click', () => {
+            inputImportarBackup.click();
+        });
+        
+        inputImportarBackup.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            
+            if (!file) {
+                return;
+            }
+            
+            if (!file.name.endsWith('.json')) {
+                document.getElementById('mensagem-erro').textContent = '❌ Por favor, selecione um arquivo JSON válido!';
+                document.getElementById('mensagem-erro').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('mensagem-erro').style.display = 'none';
+                }, 3000);
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+                    
+                    if (!jsonData.app || jsonData.app !== 'Time Divider') {
+                        throw new Error('Arquivo não é um backup válido do Time Divider');
+                    }
+                    
+                    const sucesso = window.importarTodosDados(jsonData);
+                    
+                    if (sucesso) {
+                        // Fechar modal e recarregar listas
+                        fecharModalCarregar();
+                        setTimeout(() => {
+                            renderizarPlanos();
+                            renderizarHistorico();
+                        }, 500);
+                    }
+                    
+                } catch (error) {
+                    document.getElementById('mensagem-erro').textContent = `❌ Erro ao importar backup: ${error.message}`;
+                    document.getElementById('mensagem-erro').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('mensagem-erro').style.display = 'none';
+                    }, 5000);
+                }
+                
+                inputImportarBackup.value = '';
+            };
+            
+            reader.onerror = function() {
+                document.getElementById('mensagem-erro').textContent = '❌ Erro ao ler o arquivo!';
+                document.getElementById('mensagem-erro').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('mensagem-erro').style.display = 'none';
+                }, 3000);
+            };
+            
+            reader.readAsText(file);
         });
         
         // ========== TEMPLATES DE ROTINA ==========
@@ -852,6 +947,231 @@
         
         // Expor função globalmente para que o Python possa chamar
         window.salvarNoHistorico = salvarNoHistorico;
+        
+        // ========== EXPORTAR/IMPORTAR CONFIGURAÇÕES ==========
+        const btnExportar = document.getElementById('btn-exportar');
+        const btnImportar = document.getElementById('btn-importar');
+        const inputImportar = document.getElementById('input-importar');
+        
+        // Exportar configuração atual
+        function exportarConfiguracao() {
+            const dados = getFormData();
+            
+            // Validar se há dados para exportar
+            if (!dados.atividades.trim()) {
+                document.getElementById('mensagem-erro').textContent = '⚠️ Preencha pelo menos as atividades antes de exportar!';
+                document.getElementById('mensagem-erro').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('mensagem-erro').style.display = 'none';
+                }, 3000);
+                return;
+            }
+            
+            // Criar objeto de exportação com metadados
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                app: 'Time Divider',
+                configuration: {
+                    horarioInicio: dados.horarioInicio,
+                    tempoTotal: dados.tempoTotal,
+                    horarioFinal: dados.horarioFinal,
+                    atividades: dados.atividades
+                }
+            };
+            
+            // Converter para JSON
+            const jsonString = JSON.stringify(exportData, null, 2);
+            
+            // Criar blob e download
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            // Nome do arquivo com timestamp
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            link.download = `time-divider-config-${timestamp}.json`;
+            link.href = url;
+            link.click();
+            
+            // Limpar URL
+            URL.revokeObjectURL(url);
+            
+            mostrarSucesso('📤 Configuração exportada com sucesso!');
+        }
+        
+        // Importar configuração de arquivo
+        function importarConfiguracao(event) {
+            const file = event.target.files[0];
+            
+            if (!file) {
+                return;
+            }
+            
+            // Validar tipo de arquivo
+            if (!file.name.endsWith('.json')) {
+                document.getElementById('mensagem-erro').textContent = '❌ Por favor, selecione um arquivo JSON válido!';
+                document.getElementById('mensagem-erro').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('mensagem-erro').style.display = 'none';
+                }, 3000);
+                return;
+            }
+            
+            // Ler arquivo
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+                    
+                    // Validar estrutura do arquivo
+                    if (!jsonData.app || jsonData.app !== 'Time Divider') {
+                        throw new Error('Arquivo não é uma configuração válida do Time Divider');
+                    }
+                    
+                    if (!jsonData.configuration) {
+                        throw new Error('Configuração não encontrada no arquivo');
+                    }
+                    
+                    const config = jsonData.configuration;
+                    
+                    // Validar dados mínimos
+                    if (!config.atividades || !config.atividades.trim()) {
+                        throw new Error('O arquivo não contém atividades válidas');
+                    }
+                    
+                    // Aplicar configuração ao formulário
+                    setFormData({
+                        horarioInicio: config.horarioInicio || '',
+                        tempoTotal: config.tempoTotal || '',
+                        horarioFinal: config.horarioFinal || '',
+                        atividades: config.atividades || ''
+                    });
+                    
+                    // Mostrar informações da importação
+                    const exportDate = jsonData.exportDate ? new Date(jsonData.exportDate).toLocaleString('pt-BR') : 'Desconhecida';
+                    mostrarSucesso(`📥 Configuração importada com sucesso!\n💾 Exportada em: ${exportDate}`);
+                    
+                    // Scroll para o formulário
+                    document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                } catch (error) {
+                    document.getElementById('mensagem-erro').textContent = `❌ Erro ao importar: ${error.message}`;
+                    document.getElementById('mensagem-erro').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('mensagem-erro').style.display = 'none';
+                    }, 5000);
+                }
+                
+                // Limpar input para permitir importar o mesmo arquivo novamente
+                inputImportar.value = '';
+            };
+            
+            reader.onerror = function() {
+                document.getElementById('mensagem-erro').textContent = '❌ Erro ao ler o arquivo!';
+                document.getElementById('mensagem-erro').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('mensagem-erro').style.display = 'none';
+                }, 3000);
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Eventos de exportar/importar
+        btnExportar.addEventListener('click', exportarConfiguracao);
+        btnImportar.addEventListener('click', () => {
+            inputImportar.click();
+        });
+        inputImportar.addEventListener('change', importarConfiguracao);
+        
+        // ========== EXPORTAR/IMPORTAR DADOS COMPLETOS ==========
+        // Adicionar opção no menu de planos salvos para exportar/importar todos os planos
+        
+        function exportarTodosDados() {
+            const planos = getPlanosSalvos();
+            const historico = getHistorico();
+            const tema = localStorage.getItem('theme') || 'light';
+            
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                app: 'Time Divider',
+                backup: {
+                    planosSalvos: planos,
+                    historico: historico,
+                    tema: tema
+                }
+            };
+            
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            const timestamp = new Date().toISOString().slice(0, 10);
+            link.download = `time-divider-backup-${timestamp}.json`;
+            link.href = url;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            mostrarSucesso('💾 Backup completo exportado com sucesso!');
+        }
+        
+        function importarTodosDados(jsonData) {
+            try {
+                if (!jsonData.backup) {
+                    throw new Error('Arquivo de backup inválido');
+                }
+                
+                const backup = jsonData.backup;
+                
+                // Confirmar antes de sobrescrever
+                const confirmMsg = `Importar backup completo?\n\n` +
+                    `📋 ${backup.planosSalvos?.length || 0} plano(s) salvo(s)\n` +
+                    `📜 ${backup.historico?.length || 0} item(ns) no histórico\n\n` +
+                    `⚠️ Isso irá substituir seus dados atuais!`;
+                
+                if (!confirm(confirmMsg)) {
+                    return false;
+                }
+                
+                // Importar planos salvos
+                if (backup.planosSalvos) {
+                    localStorage.setItem('timeDividerPlanos', JSON.stringify(backup.planosSalvos));
+                }
+                
+                // Importar histórico
+                if (backup.historico) {
+                    localStorage.setItem('timeDividerHistorico', JSON.stringify(backup.historico));
+                }
+                
+                // Importar tema
+                if (backup.tema) {
+                    localStorage.setItem('theme', backup.tema);
+                    document.documentElement.setAttribute('data-theme', backup.tema);
+                }
+                
+                // Atualizar interface
+                renderizarHistorico();
+                
+                mostrarSucesso('✅ Backup importado com sucesso! Recarregue a página para ver todas as alterações.');
+                
+                return true;
+            } catch (error) {
+                document.getElementById('mensagem-erro').textContent = `❌ Erro ao importar backup: ${error.message}`;
+                document.getElementById('mensagem-erro').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('mensagem-erro').style.display = 'none';
+                }, 5000);
+                return false;
+            }
+        }
+        
+        // Expor funções globalmente
+        window.exportarTodosDados = exportarTodosDados;
+        window.importarTodosDados = importarTodosDados;
         
         // ========== CARROSSEL DE BENEFÍCIOS ==========
         const track = document.getElementById('carousel-track');
