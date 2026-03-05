@@ -4,12 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>⏱️ Time Divider - Versão Web</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/brython@3.12.3/brython.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/brython@3.12.3/brython_stdlib.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body onload="brython()">
+    <!-- Particulas de fundo -->
+    <div class="background-particles" id="bg-particles"></div>
+
     <div class="container">
         <!-- Toggle Dark Mode -->
         <button class="theme-toggle" id="theme-toggle" aria-label="Alternar tema">
@@ -269,6 +275,31 @@
     <script type="text/python" src="app.py"></script>
     
     <script>
+        // ========== PARTICULAS DE FUNDO ==========
+        (function() {
+            const container = document.getElementById('bg-particles');
+            if (!container) return;
+            const PARTICLE_COUNT = 35;
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle');
+                const size = Math.random() * 4 + 2;
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const duration = Math.random() * 8 + 4;
+                const delay = Math.random() * 2;
+                const opacity = Math.random() * 0.5 + 0.5;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.left = x + '%';
+                p.style.top = y + '%';
+                p.style.animationDuration = duration + 's';
+                p.style.animationDelay = delay + 's';
+                p.style.setProperty('--particle-opacity', opacity);
+                container.appendChild(p);
+            }
+        })();
+
         // ========== DARK MODE ==========
         const themeToggle = document.getElementById('theme-toggle');
         const html = document.documentElement;
