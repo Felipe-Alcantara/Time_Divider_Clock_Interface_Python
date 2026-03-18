@@ -1,3 +1,4 @@
 # Ignorar diretórios temporários gerados por ferramentas de build
 build/
 dist/
+/felixo-standards
